@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Tech Nexus — Learn • Build • Ship</title>
+  <title>CYSA+ Study Site</title>
   <meta name="description" content="A sleek, dark-mode, mobile-first tech website template with animated background, cards, and sections for topics, labs, and resources." />
   <style>
     /* =====================
@@ -147,6 +147,9 @@
     .footgrid{display:grid; gap:1.2rem; grid-template-columns:1fr}
     @media(min-width:900px){.footgrid{grid-template-columns: 1.2fr .8fr .8fr}}
     .copyright{margin-top:1rem; font-size:.9rem}
+      /* Subtle hero variant */
+    .hero.subtle{padding: clamp(1rem, 3vw, 2rem) 0}
+    .hero-card.subtle{background:linear-gradient(180deg, #0c1420, #0a101a); border:1px solid #142235; box-shadow:0 6px 18px rgba(0,0,0,.28)}
   </style>
 </head>
 <body>
@@ -172,183 +175,46 @@
     </div>
   </header>
 
-  <!-- Hero -->
-  <section class="hero container">
-    <div class="hero-card">
-      <div class="hero-inner hero-grid">
-        <div>
-          <div class="kicker"><span class="dot"></span><span class="muted">Modern • Practical • Hands‑on</span></div>
-          <h2>Build your tech skills—one elegant lesson at a time.</h2>
-          <p>Curated deep dives, bite‑size labs, and real‑world projects for networking, security, cloud, and dev.</p>
-          <div class="cta">
-            <a class="btn primary" href="#labs">Start a Lab</a>
-            <a class="btn" href="#resources">Browse Resources</a>
+  <!-- Hero (subtle module) -->
+  <section class="hero container subtle">
+    <div class="hero-card subtle">
+      <div class="hero-inner" style="display:flex; align-items:center; gap:1rem">
+        <div style="flex:1">
+          <div class="kicker"><span class="dot"></span><span class="muted">Futuristic • Minimal • Focused</span></div>
+          <h2 style="margin:.2rem 0 0; font-size:clamp(1.35rem,3.4vw,2.2rem)">Tech Nexus — ship clean, modular content.</h2>
+          <p style="margin:.5rem 0 0" class="muted">A quiet hero: fewer shadows, softer gradient, and compact spacing to keep the spotlight on your modules.</p>
+          <div class="cta" style="margin-top:.7rem">
+            <a class="btn primary" href="#resources">Explore Resources</a>
+            <a class="btn" href="#">Learn More</a>
           </div>
-        </div>
-        <div class="hero-visual">
-          <div class="orb" style="top:10%; left:10%"></div>
-          <div class="orb"></div>
-          <div class="orb"></div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Topics -->
-  <section id="topics" class="container">
+  <!-- Newsletter CTA (kept) -->
+  <div class="container"><div class="spacer" role="separator"></div></div>
+  <section class="container" id="resources">
     <div class="section-title">
-      <h3>Tech Topics</h3>
-      <span class="muted hide-sm">Add or remove cards to match your focus areas.</span>
-    </div>
-    <div class="grid cols-3">
-      <!-- Card 1 -->
-      <article class="card reveal">
-        <div class="sup">Networking</div>
-        <h4>Foundations & Troubleshooting</h4>
-        <p>Subnets, routing, VLANs, and the tooling that keeps packets honest.</p>
-        <div class="chiprow">
-          <span class="chip">CIDR</span>
-          <span class="chip">OSPF / BGP</span>
-          <span class="chip">Wireshark</span>
-        </div>
-      </article>
-      <!-- Card 2 -->
-      <article class="card reveal">
-        <div class="sup">Security</div>
-        <h4>Defense & Detection</h4>
-        <p>From SIEM tuning to threat intel, blue‑team tradecraft with hands‑on labs.</p>
-        <div class="chiprow">
-          <span class="chip">MITRE ATT&CK</span>
-          <span class="chip">EDR</span>
-          <span class="chip">Threat Hunting</span>
-        </div>
-      </article>
-      <!-- Card 3 -->
-      <article class="card reveal">
-        <div class="sup">Cloud</div>
-        <h4>Deploy & Automate</h4>
-        <p>Infrastructure as code, serverless, and practical cost‑aware architectures.</p>
-        <div class="chiprow">
-          <span class="chip">AWS</span>
-          <span class="chip">Terraform</span>
-          <span class="chip">Kubernetes</span>
-        </div>
-      </article>
-      <!-- Card 4 -->
-      <article class="card reveal">
-        <div class="sup">Dev</div>
-        <h4>Full‑stack Essentials</h4>
-        <p>Modern JS, APIs, and patterns that scale from weekend app to startup.</p>
-        <div class="chiprow">
-          <span class="chip">React</span>
-          <span class="chip">Node</span>
-          <span class="chip">Auth</span>
-        </div>
-      </article>
-      <!-- Card 5 -->
-      <article class="card reveal">
-        <div class="sup">Data</div>
-        <h4>Analytics & ML</h4>
-        <p>Clean data, extract signal, and ship insights that matter.</p>
-        <div class="chiprow">
-          <span class="chip">Pandas</span>
-          <span class="chip">Notebooks</span>
-          <span class="chip">LLMs</span>
-        </div>
-      </article>
-      <!-- Card 6 -->
-      <article class="card reveal">
-        <div class="sup">Ops</div>
-        <h4>Ship with Confidence</h4>
-        <p>Observability, incident response, and resilient release engineering.</p>
-        <div class="chiprow">
-          <span class="chip">SRE</span>
-          <span class="chip">CI/CD</span>
-          <span class="chip">Dashboards</span>
-        </div>
-      </article>
-    </div>
-  </section>
-
-  <!-- Labs / Projects -->
-  <section id="labs" class="container">
-    <div class="section-title">
-      <h3>Hands‑on Labs</h3>
-      <a class="muted" href="#">View all →</a>
-    </div>
-    <div class="grid cols-3">
-      <article class="card reveal project">
-        <div class="thumb" role="img" aria-label="Packet capture lab thumbnail"></div>
-        <div class="sup">Beginner • 25 min</div>
-        <h4>Analyze a Suspicious PCAP</h4>
-        <p>Use filters, follow TCP streams, and extract IOCs like a pro.</p>
-        <div class="chiprow">
-          <span class="chip">Wireshark</span>
-          <span class="chip">PCAP</span>
-        </div>
-      </article>
-      <article class="card reveal project">
-        <div class="thumb" role="img" aria-label="Cloud IaC thumbnail"></div>
-        <div class="sup">Intermediate • 45 min</div>
-        <h4>IaC: Deploy a Secure VPC</h4>
-        <p>Provision subnets, route tables, and gateways with Terraform.</p>
-        <div class="chiprow">
-          <span class="chip">AWS</span>
-          <span class="chip">Terraform</span>
-        </div>
-      </article>
-      <article class="card reveal project">
-        <div class="thumb" role="img" aria-label="SIEM tuning thumbnail"></div>
-        <div class="sup">Intermediate • 40 min</div>
-        <h4>SIEM Tuning: Noisy to Notable</h4>
-        <p>Normalize logs, enrich events, and craft high‑fidelity alerts.</p>
-        <div class="chiprow">
-          <span class="chip">Sigma</span>
-          <span class="chip">ELK</span>
-        </div>
-      </article>
-    </div>
-  </section>
-
-  <!-- Resources -->
-  <section id="resources" class="container">
-    <div class="section-title">
-      <h3>Resources & Tools</h3>
-      <span class="muted">Starter links you can tailor to your stack.</span>
+      <h3>Starter Resources</h3>
+      <span class="muted">Swap these with your own links.</span>
     </div>
     <div class="grid cols-3">
       <article class="card reveal">
-        <div class="sup">Guides</div>
-        <h4>Cheatsheets & Checklists</h4>
-        <p>Field‑tested templates for incidents, reviews, and rollouts.</p>
+        <div class="sup">Templates</div>
+        <h4>Checklists & SOPs</h4>
+        <p class="muted">Deployment reviews, IR checklists, runbooks.</p>
       </article>
       <article class="card reveal">
         <div class="sup">Tools</div>
-        <h4>Open‑source Utilities</h4>
-        <p>CLI helpers, dashboards, and tiny web apps—ready to fork.</p>
+        <h4>CLI & Dashboards</h4>
+        <p class="muted">Tiny utils for daily workflows. Ready to fork.</p>
       </article>
       <article class="card reveal">
         <div class="sup">Community</div>
-        <h4>Study Groups & Office Hours</h4>
-        <p>Weekly sessions to unblock builds and share wins.</p>
+        <h4>Study Groups</h4>
+        <p class="muted">Weekly deep‑dives by domain.</p>
       </article>
-    </div>
-  </section>
-
-  <div class="container"><div class="spacer" role="separator"></div></div>
-
-  <!-- Newsletter CTA -->
-  <section class="container">
-    <div class="card reveal" style="display:grid; gap:1rem; padding:1.2rem 1.2rem 1.4rem">
-      <h4 style="margin:0">Stay in the loop</h4>
-      <p class="muted" style="margin:0">Short, actionable updates on labs, tools, and write‑ups. No noise.</p>
-      <form class="stack-6" onsubmit="event.preventDefault(); alert('Subscribed! 🎉');">
-        <div style="display:flex; gap:.6rem; flex-wrap:wrap">
-          <input type="email" required placeholder="you@domain.com" aria-label="Email"
-                 style="flex:1; min-width:220px; padding:.85rem 1rem; border-radius:12px; border:1px solid #1b2842; color:var(--fg); background:#0b1322; outline:none" />
-          <button class="btn primary" type="submit">Subscribe</button>
-        </div>
-      </form>
     </div>
   </section>
 
@@ -445,6 +311,6 @@
     }
     addEventListener('resize', resize);
     resize(); init(); step();
-  </script>
+      </script>
 </body>
 </html>
