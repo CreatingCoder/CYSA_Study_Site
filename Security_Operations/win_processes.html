@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Windows Processes — Matching Quiz</title>
+<title>Windows Processes — Matching Quiz (Mobile Fixed)</title>
 <style>
   :root{
     --bg:#0d1117; --card:#161b22; --ink:#e6edf3; --muted:#9fb1c3;
@@ -29,15 +29,17 @@
   .item{
     border:1px solid var(--border);border-radius:12px;background:var(--chip);
     padding:10px 12px;font-weight:700;display:flex;justify-content:space-between;align-items:center;
-    cursor:grab;user-select:none
+    user-select:none; touch-action:none; cursor:grab;
   }
+  .item:active{cursor:grabbing}
+  .ghost{opacity:.35}
+  .ghost-select{outline:2px dashed #58a6ff}
   .abbr{font-size:12px;color:#9cc1ff;background:#0f1722;border:1px solid #23324a;border-radius:999px;padding:2px 8px}
   .target{
     background:var(--chip);border:1px solid var(--border);border-radius:12px;
     padding:10px 12px;position:relative;transition:outline .25s ease, box-shadow .25s ease;
   }
   .desc{color:var(--ink);font-size:14px;line-height:1.25}
-  .ghost{opacity:.35}
   .is-correct{ outline:2px solid var(--ok-glow); box-shadow:0 0 6px rgba(46,160,67,.4); }
   .flash-wrong{ animation:wrong .45s ease; }
   @keyframes wrong{
@@ -129,30 +131,28 @@ function render(){
   listEl.innerHTML = '';
   targetsEl.innerHTML = '';
 
-  // Left: process chips
+  // Left: chips (pointer-based drag + tap-to-select)
   for(const p of shuffle(PAIRS)){
     const chip = document.createElement('div');
     chip.className = 'item';
     chip.tabIndex = 0;
-    chip.draggable = true;
     chip.dataset.pairId = p.id;
     chip.innerHTML = `<span>${p.term}</span><span class="abbr">${p.abbr}</span>`;
 
-    chip.addEventListener('dragstart', e=>{
-      e.dataTransfer.setData('text/plain', p.id);
-    });
+    enablePointerDrag(chip);
 
     chip.addEventListener('click', ()=>{
-      const wasGhost = chip.classList.contains('ghost');
-      document.querySelectorAll('.item').forEach(c=>c.classList.remove('ghost'));
-      if(!wasGhost){ chip.classList.add('ghost'); selectedChip = chip; }
-      else{ selectedChip = null; }
+      if (chip.classList.contains('ghost')) return;
+      const already = chip.classList.contains('ghost-select');
+      document.querySelectorAll('.item').forEach(c=>c.classList.remove('ghost-select'));
+      if (!already){ chip.classList.add('ghost-select'); selectedChip = chip; }
+      else { selectedChip = null; }
     });
 
     listEl.appendChild(chip);
   }
 
-  // Right: description targets
+  // Right: targets (tap-to-place supported)
   for(const p of shuffle(PAIRS)){
     const wrap = document.createElement('div');
     wrap.className = 'target';
@@ -165,32 +165,20 @@ function render(){
     wrap.appendChild(desc);
     targetsEl.appendChild(wrap);
 
-    wrap.addEventListener('dragover', e=> e.preventDefault());
-    wrap.addEventListener('drop', e=>{
-      e.preventDefault();
-      const pairId = e.dataTransfer.getData('text/plain');
-      attemptPlace(pairId, wrap);
-    });
-
     wrap.addEventListener('click', ()=>{
       if(!selectedChip) return;
-      attemptPlace(selectedChip.dataset.pairId, wrap);
-    });
-
-    wrap.addEventListener('keydown', e=>{
-      if((e.key==='Enter'||e.key===' ') && selectedChip){
-        e.preventDefault();
-        attemptPlace(selectedChip.dataset.pairId, wrap);
-      }
+      attemptPlace(selectedChip.dataset.pairId, wrap, selectedChip);
+      selectedChip = null;
+      document.querySelectorAll('.item').forEach(c=>c.classList.remove('ghost-select'));
     });
   }
 }
 
-function attemptPlace(pairId, targetEl){
+function attemptPlace(pairId, targetEl, chipEl){
   const targetId = targetEl.dataset.targetId;
   if(placements.has(targetId)) return;
 
-  const chip = document.querySelector(`.item[data-pair-id="${pairId}"]`);
+  const chip = chipEl || document.querySelector(`.item[data-pair-id="${pairId}"]`);
   if(!chip) return;
 
   if(pairId === targetId){
@@ -199,11 +187,9 @@ function attemptPlace(pairId, targetEl){
     chip.setAttribute('aria-disabled','true');
     chip.style.pointerEvents = 'none';
     chip.classList.add('ghost');
-    selectedChip = null;
   } else {
     flashWrong(targetEl);
-    chip.classList.remove('ghost');
-    selectedChip = null;
+    chip.classList.remove('ghost-select');
   }
   updateScore();
 }
@@ -236,6 +222,54 @@ function showCongrats(){
 function removeCongrats(){
   const o = document.querySelector('.overlay');
   if(o) o.remove();
+}
+
+/* ===== Pointer-drag implementation (mobile friendly) ===== */
+function enablePointerDrag(chip){
+  let dragging = false;
+  let clone = null;
+  let offX = 0, offY = 0;
+
+  chip.addEventListener('pointerdown', (e)=>{
+    if (chip.classList.contains('ghost')) return;
+    dragging = true;
+    chip.setPointerCapture(e.pointerId);
+    const rect = chip.getBoundingClientRect();
+    offX = e.clientX - rect.left;
+    offY = e.clientY - rect.top;
+
+    clone = chip.cloneNode(true);
+    clone.style.position = 'fixed';
+    clone.style.left = (e.clientX - offX) + 'px';
+    clone.style.top  = (e.clientY - offY) + 'px';
+    clone.style.width = rect.width + 'px';
+    clone.style.zIndex = 9999;
+    clone.style.opacity = .95;
+    clone.style.pointerEvents = 'none';
+    clone.classList.add('dragging');
+    document.body.appendChild(clone);
+  });
+
+  window.addEventListener('pointermove', (e)=>{
+    if(!dragging || !clone) return;
+    clone.style.left = (e.clientX - offX) + 'px';
+    clone.style.top  = (e.clientY - offY) + 'px';
+  }, { passive:true });
+
+  window.addEventListener('pointerup', (e)=>{
+    if(!dragging){ return; }
+    dragging = false;
+    if (clone){
+      const dropEl = document.elementFromPoint(e.clientX, e.clientY);
+      const target = dropEl ? dropEl.closest('.target') : null;
+      if (target){
+        attemptPlace(chip.dataset.pairId, target, chip);
+      }
+      clone.remove();
+      clone = null;
+    }
+    try { chip.releasePointerCapture(e.pointerId); } catch {}
+  }, { passive:true });
 }
 
 shuffleBtn.addEventListener('click', init);
