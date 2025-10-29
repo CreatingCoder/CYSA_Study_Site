@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Cyber Kill Chain — Matching Quiz + Bonus Round</title>
+<style>
+  :root{
+    --bg:#0d1117; --card:#161b22; --ink:#e6edf3; --muted:#9fb1c3;
+    --border:#263042; --ok-glow:#2ea043; --bad-glow:#ff6b6b; --chip:#121821;
+    --radius:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;overflow-x:hidden}
+  .wrap{max-width:1100px;margin:0 auto;padding:18px}
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+  h1{font-size:18px;margin:0;font-weight:700}
+  .mode{color:var(--muted);font-weight:700;font-size:12px;margin-top:4px}
+  .btn{
+    background:#1b2230;border:1px solid var(--border);color:var(--ink);
+    padding:8px 12px;border-radius:10px;font-weight:600;cursor:pointer
+  }
+  .btn:active{transform:translateY(1px)}
+  .grid{display:grid;gap:14px}
+  @media (min-width:720px){ .grid{grid-template-columns:1fr 1fr} }
+  .col{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:12px}
+  .col h2{font-size:14px;margin:0 0 10px;color:var(--muted);font-weight:700}
+  .list,.targets{display:grid;gap:10px}
+  .item{
+    border:1px solid var(--border);border-radius:12px;background:var(--chip);
+    padding:10px 12px;font-weight:700;display:flex;justify-content:space-between;align-items:center;
+    cursor:grab;user-select:none
+  }
+  .abbr{font-size:12px;color:#9cc1ff;background:#0f1722;border:1px solid #23324a;border-radius:999px;padding:2px 8px}
+  .target{
+    background:var(--chip);border:1px solid var(--border);border-radius:12px;
+    padding:10px 12px;position:relative;transition:outline .25s ease, box-shadow .25s ease;
+  }
+  .desc{color:var(--ink);font-size:14px;line-height:1.25}
+  .ghost{opacity:.35}
+  .is-correct{ outline:2px solid var(--ok-glow); box-shadow:0 0 6px rgba(46,160,67,.4); }
+  .flash-wrong{ animation:wrong .45s ease; }
+  @keyframes wrong{
+    0%{outline:2px solid transparent}
+    20%,80%{outline:2px solid var(--bad-glow);box-shadow:0 0 8px rgba(255,107,107,.4);transform:translateX(0)}
+    30%,70%{transform:translateX(-3px)}
+    50%{transform:translateX(3px)}
+    100%{transform:translateX(0)}
+  }
+  .overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,.7);
+    display:flex;align-items:center;justify-content:center;
+    z-index:10;animation:fadeIn .4s ease;
+  }
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .popup{
+    background:#161b22;padding:32px 28px;border-radius:16px;
+    text-align:center;box-shadow:0 0 20px rgba(46,160,67,.35);
+    animation:pop .5s ease; max-width:520px
+  }
+  @keyframes pop{0%{transform:scale(.9);opacity:0}100%{transform:scale(1);opacity:1}}
+  .popup h2{color:#2ea043;margin:0 0 8px;font-size:26px}
+  .popup p{color:var(--muted);margin:0 0 18px}
+  .popup .row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+  .popup button{background:#2ea043;color:white;border:none;padding:10px 16px;border-radius:10px;font-weight:700;cursor:pointer}
+  .popup button.secondary{background:#23314a}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Match the Cyber Kill Chain</h1>
+      <div class="mode" id="modeLabel">Round: Stages → Descriptions</div>
+    </div>
+    <div class="actions">
+      <button class="btn" id="shuffleBtn">Shuffle / Reset</button>
+      <span style="margin-left:8px;color:var(--muted);font-weight:700">Score: <span id="score">0/0</span></span>
+    </div>
+  </header>
+
+  <section class="grid">
+    <div class="col">
+      <h2 id="leftTitle">Stages</h2>
+      <div class="list" id="list"></div>
+    </div>
+    <div class="col">
+      <h2 id="rightTitle">Descriptions</h2>
+      <div class="targets" id="targets"></div>
+    </div>
+  </section>
+</div>
+
+<script>
+// ===== Base round: Stages -> Definitions =====
+const BASE_PAIRS = [
+  { id:"Recon", term:"Reconnaissance", abbr:"Stage 1",
+    desc:"Adversary gathers intelligence on targets (people, tech, exposed services, suppliers) to identify attack paths." },
+  { id:"Weap", term:"Weaponization", abbr:"Stage 2",
+    desc:"Crafting a payload that pairs an exploit with a backdoor (e.g., malicious document + RAT), typically offline." },
+  { id:"Delv", term:"Delivery", abbr:"Stage 3",
+    desc:"Transmitting the weapon to the victim via email, web, removable media, supply chain, or other channels." },
+  { id:"Expl", term:"Exploitation", abbr:"Stage 4",
+    desc:"Triggering the exploit on the victim system to execute code and gain initial foothold." },
+  { id:"Inst", term:"Installation", abbr:"Stage 5",
+    desc:"Installing malware, establishing persistence (services, registry, scheduled tasks), and preparing for control." },
+  { id:"C2",   term:"Command & Control (C2)", abbr:"Stage 6",
+    desc:"Establishing a channel to remotely control compromised hosts (beacons, HTTP(S)/DNS/ICMP tunnels, etc.)." },
+  { id:"Act",  term:"Actions on Objectives", abbr:"Stage 7",
+    desc:"Executing mission goals (data discovery, lateral movement, collection, exfiltration, encryption, disruption)." },
+];
+
+// ===== Bonus round: Stages -> Defender Countermeasures =====
+const DEFENSE_PAIRS = [
+  { id:"Recon", term:"Reconnaissance", abbr:"Counter",
+    desc:"Reduce public footprint; asset/attack-surface mgmt, external scanning, threat intel, brand monitoring, user awareness." },
+  { id:"Weap", term:"Weaponization", abbr:"Counter",
+    desc:"Pre-delivery controls: threat intel + YARA/IOC matching, detonate samples in sandbox, secure SDLC/code signing." },
+  { id:"Delv", term:"Delivery", abbr:"Counter",
+    desc:"Email/web gateway filtering, attachment and URL rewriting/sandboxing, DMARC/SPF/DKIM, block risky file types." },
+  { id:"Expl", term:"Exploitation", abbr:"Counter",
+    desc:"Patch/vuln mgmt, IPS/virtual patching, exploit mitigations (DEP/ASLR/CFG), least privilege, application allow-listing." },
+  { id:"Inst", term:"Installation", abbr:"Counter",
+    desc:"EDR/anti-malware, app control, block unauthorized service/registry/task creation, script control, tamper protection." },
+  { id:"C2",   term:"Command & Control (C2)", abbr:"Counter",
+    desc:"Egress filtering, DNS sinkhole, proxy/TLS inspection (lawful), anomaly/beaconing detection, block known C2 infra." },
+  { id:"Act",  term:"Actions on Objectives", abbr:"Counter",
+    desc:"Network segmentation/zero trust, DLP, UEBA/SIEM monitoring, backup/immutable copies, exfil detection & rate-limits." },
+];
+
+const listEl = document.getElementById('list');
+const targetsEl = document.getElementById('targets');
+const scoreEl = document.getElementById('score');
+const shuffleBtn = document.getElementById('shuffleBtn');
+const modeLabel = document.getElementById('modeLabel');
+const leftTitle = document.getElementById('leftTitle');
+const rightTitle = document.getElementById('rightTitle');
+
+let placements = new Map();
+let selectedChip = null;
+let mode = 'base'; // 'base' or 'defense'
+
+function currentPairs(){ return mode === 'base' ? BASE_PAIRS : DEFENSE_PAIRS; }
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+
+function init(){
+  placements.clear();
+  selectedChip = null;
+  render();
+  updateScore();
+  removeOverlay();
+  modeLabel.textContent = mode === 'base'
+    ? 'Round: Stages → Descriptions'
+    : 'Bonus Round: Stages → Countermeasures';
+  leftTitle.textContent = 'Stages';
+  rightTitle.textContent = mode === 'base' ? 'Descriptions' : 'Countermeasures';
+}
+
+function render(){
+  listEl.innerHTML = '';
+  targetsEl.innerHTML = '';
+
+  // Left chips
+  for(const p of shuffle(currentPairs())){
+    const chip = document.createElement('div');
+    chip.className = 'item';
+    chip.tabIndex = 0;
+    chip.draggable = true;
+    chip.dataset.pairId = p.id;
+    chip.innerHTML = `<span>${p.term}</span><span class="abbr">${p.abbr}</span>`;
+
+    chip.addEventListener('dragstart', e=>{
+      e.dataTransfer.setData('text/plain', p.id);
+    });
+
+    chip.addEventListener('click', ()=>{
+      const wasGhost = chip.classList.contains('ghost');
+      document.querySelectorAll('.item').forEach(c=>c.classList.remove('ghost'));
+      if(!wasGhost){ chip.classList.add('ghost'); selectedChip = chip; }
+      else{ selectedChip = null; }
+    });
+
+    listEl.appendChild(chip);
+  }
+
+  // Right targets
+  for(const p of shuffle(currentPairs())){
+    const wrap = document.createElement('div');
+    wrap.className = 'target';
+    wrap.dataset.targetId = p.id;
+
+    const desc = document.createElement('div');
+    desc.className = 'desc';
+    desc.textContent = p.desc;
+
+    wrap.appendChild(desc);
+    targetsEl.appendChild(wrap);
+
+    wrap.addEventListener('dragover', e=> e.preventDefault());
+    wrap.addEventListener('drop', e=>{
+      e.preventDefault();
+      const pairId = e.dataTransfer.getData('text/plain');
+      attemptPlace(pairId, wrap);
+    });
+
+    wrap.addEventListener('click', ()=>{
+      if(!selectedChip) return;
+      attemptPlace(selectedChip.dataset.pairId, wrap);
+    });
+
+    wrap.addEventListener('keydown', e=>{
+      if((e.key==='Enter'||e.key===' ') && selectedChip){
+        e.preventDefault();
+        attemptPlace(selectedChip.dataset.pairId, wrap);
+      }
+    });
+  }
+}
+
+function attemptPlace(pairId, targetEl){
+  const targetId = targetEl.dataset.targetId;
+  if(placements.has(targetId)) return;
+
+  const chip = document.querySelector(`.item[data-pair-id="${pairId}"]`);
+  if(!chip) return;
+
+  if(pairId === targetId){
+    placements.set(targetId, pairId);
+    targetEl.classList.add('is-correct');
+    chip.setAttribute('aria-disabled','true');
+    chip.style.pointerEvents = 'none';
+    chip.classList.add('ghost');
+    selectedChip = null;
+  } else {
+    flashWrong(targetEl);
+    chip.classList.remove('ghost');
+    selectedChip = null;
+  }
+  updateScore();
+}
+
+function flashWrong(targetEl){
+  targetEl.classList.remove('is-correct');
+  targetEl.classList.add('flash-wrong');
+  setTimeout(()=> targetEl.classList.remove('flash-wrong'), 480);
+}
+
+function updateScore(){
+  const total = currentPairs().length;
+  const correct = placements.size;
+  scoreEl.textContent = `${correct}/${total}`;
+  if(correct === total) showOverlay();
+}
+
+function showOverlay(){
+  const overlay = document.createElement('div');
+  overlay.className = 'overlay';
+  const isBonus = mode === 'defense';
+  overlay.innerHTML = `
+    <div class="popup">
+      <h2>🎉 Congratulations! 🎉</h2>
+      <p>${isBonus
+        ? 'You aced the Bonus Round (countermeasures)!'
+        : 'You matched all Cyber Kill Chain stages correctly.'}</p>
+      <div class="row">
+        <button onclick="init()">${isBonus ? 'Replay Bonus' : 'Replay Round'}</button>
+        ${isBonus
+          ? '<button class="secondary" onclick="setModeAndStart(\'base\')">Play Base Round</button>'
+          : '<button class="secondary" onclick="setModeAndStart(\'defense\')">Start Bonus Round</button>'}
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+function removeOverlay(){
+  const o = document.querySelector('.overlay');
+  if(o) o.remove();
+}
+
+function setModeAndStart(m){
+  mode = m;
+  init();
+}
+
+shuffleBtn.addEventListener('click', init);
+
+// Expose for overlay buttons
+window.setModeAndStart = setModeAndStart;
+
+init();
+</script>
+</body>
+</html>
