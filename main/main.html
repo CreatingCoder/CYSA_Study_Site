@@ -1,316 +1,143 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CYSA+ Study Site</title>
-  <meta name="description" content="A sleek, dark-mode, mobile-first tech website template with animated background, cards, and sections for topics, labs, and resources." />
+  <title>CySA+ — Five Domain Links</title>
+  <meta name="description" content="Dark, mobile-first landing page with animated gradient and subtle matrix-style digital rain behind five CySA+ domain links."/>
   <style>
-    /* =====================
-       THEME & RESET
-       ===================== */
     :root{
-      --bg:#0b0e14;            /* base background */
-      --bg-2:#0f1420;          /* elevated surfaces */
-      --fg:#dbe7ff;            /* main text */
-      --fg-dim:#a9b4c9;        /* secondary text */
-      --accent:#7cf3ff;        /* primary accent */
-      --accent-2:#77ffb3;      /* secondary accent */
-      --card:#101722;          /* card surface */
-      --card-2:#0c111b;        /* deeper card */
-      --ring: 0 0 0 2px color-mix(in oklab, var(--accent) 40%, transparent);
-      --radius:22px;
-      --shadow:0 10px 30px rgba(0,0,0,.35);
+      --bg1:#0b0d10; --bg2:#102030; --bg3:#1b3650;
+      --text:#e6edf3; --muted:#9fb0c0; --card:rgba(18,22,27,0.75); --border:rgba(255,255,255,0.08);
+      --accent:#65c7ff; --radius:18px; --shadow:0 10px 30px rgba(0,0,0,.35);
     }
-
     *{box-sizing:border-box}
-    html,body{margin:0;padding:0}
-    body{font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
-         color:var(--fg); background:var(--bg); line-height:1.55; -webkit-font-smoothing:antialiased;}
-    a{color:var(--accent); text-decoration:none}
-    a:hover{text-decoration:underline}
-    img{max-width:100%; display:block}
-
-    /* =====================
-       ANIMATED BACKGROUND
-       ===================== */
-    .bg-wrap{position:fixed; inset:0; z-index:-2; overflow:hidden}
-    .bg-gradient{position:absolute; inset:-20%; filter:blur(60px); opacity:.55;
-      background: radial-gradient(1100px 700px at 10% 10%, #3cd1ff22, transparent),
-                  radial-gradient(900px 600px at 90% 0%, #8bffda22, transparent),
-                  radial-gradient(1000px 800px at 40% 100%, #5f6cff22, transparent),
-                  linear-gradient(180deg, #06080f 0%, #0b0e14 40%, #0b0e14 100%);
-      animation:bgShift 30s ease-in-out infinite alternate}
-    @keyframes bgShift{to{transform:translateY(-2%) translateX(-1%) scale(1.02)}}
-
-    /* lightweight particle network canvas */
-    canvas#net{position:absolute; inset:0; z-index:-1; opacity:.25}
-
-    /* =====================
-       LAYOUT
-       ===================== */
-    .container{width:min(1100px, 92vw); margin-inline:auto}
-    .stack-6{display:grid; gap:1.5rem}
-    .stack-10{display:grid; gap:2.5rem}
-
-    /* =====================
-       HEADER / NAV
-       ===================== */
-    header{position:sticky; top:0; backdrop-filter: blur(10px); z-index:20}
-    .nav{display:flex; align-items:center; justify-content:space-between; padding:.9rem 0}
-    .brand{display:flex; align-items:center; gap:.7rem}
-    .logo{width:34px; height:34px; border-radius:12px; background:linear-gradient(135deg, var(--accent), var(--accent-2)); box-shadow: inset 0 0 12px #0006}
-    .brand h1{font-size:1.05rem; margin:0; letter-spacing:.4px}
-
-    .nav-links{display:flex; gap:.9rem; align-items:center}
-    .nav-links a{padding:.55rem .8rem; border-radius:999px; background:linear-gradient(180deg, #0f1626, #0c1220);
-                 border:1px solid #1a2436; color:var(--fg-dim)}
-    .nav-links a:hover{color:var(--fg); box-shadow: var(--shadow)}
-
-    .toggle{appearance:none; border:none; background:#0f1626; color:var(--fg-dim);
-            border:1px solid #1a2436; padding:.55rem .8rem; border-radius:999px; cursor:pointer}
-    .toggle:hover{color:var(--fg)}
-
-    /* =====================
-       HERO
-       ===================== */
-    .hero{padding: clamp(2rem, 6vw, 5rem) 0}
-    .hero-card{position:relative; overflow:hidden; border-radius:var(--radius); background:linear-gradient(180deg, #0e1524, #0a111d);
-               border:1px solid #162136; box-shadow: var(--shadow)}
-    .hero-inner{display:grid; gap:1.5rem; padding: clamp(1.2rem, 4vw, 2rem)}
-    .kicker{display:inline-flex; gap:.5rem; align-items:center; font-size:.85rem; color:var(--fg-dim)}
-    .kicker .dot{width:8px; height:8px; border-radius:50%; background:var(--accent)}
-    .hero h2{margin:0; font-size: clamp(1.6rem, 4.5vw, 3rem); letter-spacing:.4px}
-    .hero p{margin:.4rem 0 1.2rem; color:var(--fg-dim)}
-
-    .cta{display:flex; gap:.8rem; flex-wrap:wrap}
-    .btn{display:inline-flex; align-items:center; gap:.6rem; padding:.8rem 1.0rem; border-radius:14px; border:1px solid #1a2436; background:linear-gradient(180deg, #101a2b, #0b1220); color:var(--fg); cursor:pointer}
-    .btn:hover{box-shadow:var(--shadow); transform:translateY(-1px)}
-    .btn.primary{background:linear-gradient(180deg, color-mix(in oklab, var(--accent) 20%, #0a1424), #0a1424);
-                 border-color: color-mix(in oklab, var(--accent) 60%, #1a2436)}
-
-    .hero-grid{display:grid; grid-template-columns:1fr; gap:1rem}
-    @media(min-width:820px){
-      .hero-grid{grid-template-columns:1.25fr .75fr}
+    html,body{height:100%;margin:0;padding:0}
+    body{
+      font:16px/1.55 system-ui,-apple-system,Segoe UI,Inter,Arial,sans-serif;
+      color:var(--text);
+      background:linear-gradient(-45deg,var(--bg1),var(--bg2),var(--bg3),#090c12);
+      background-size:400% 400%;
+      animation:gradientShift 20s ease infinite;
+      min-height:100vh;
     }
-    .hero-visual{position:relative; min-height:220px; border-top:1px solid #162136}
-    @media(min-width:820px){.hero-visual{border-top:none; border-left:1px solid #162136}}
-    .orb{position:absolute; width:180px; height:180px; border-radius:50%;
-         background:radial-gradient(circle at 35% 35%, white 0 8%, var(--accent) 10%, transparent 60%);
-         filter:blur(4px); opacity:.8; animation: float 9s ease-in-out infinite}
-    .orb:nth-child(2){top:20%; left:55%; width:120px; height:120px; animation-delay:-2s}
-    .orb:nth-child(3){top:60%; left:10%; width:150px; height:150px; animation-delay:-4s}
-    @keyframes float{0%,100%{transform:translateY(0) translateX(0)}50%{transform:translateY(-12px) translateX(6px)}}
+    @keyframes gradientShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+    a{color:inherit;text-decoration:none}
 
-    /* =====================
-       SECTION: FEATURE CARDS
-       ===================== */
-    section{padding: clamp(1.8rem, 4.5vw, 3.2rem) 0}
-    .section-title{display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:1.2rem}
-    .section-title h3{margin:0; font-size: clamp(1.15rem, 3vw, 1.6rem)}
+    /* Digital rain canvas sits behind content */
+    #rainCanvas{position:fixed;inset:0;z-index:0;opacity:.18;pointer-events:none}
 
-    .grid{display:grid; gap:1rem}
-    .grid.cols-3{grid-template-columns:1fr}
-    @media(min-width:720px){.grid.cols-3{grid-template-columns:repeat(2, 1fr)}}
-    @media(min-width:1040px){.grid.cols-3{grid-template-columns:repeat(3, 1fr)}}
+    .wrap{position:relative;z-index:1;width:100%;max-width:900px;padding:20px;margin-inline:auto}
+    header{text-align:center;margin-top:40px}
+    h1{margin:0 0 6px 0;font-size:clamp(24px,4vw,36px)}
+    p.tag{margin:0;color:var(--muted)}
 
-    .card{background:linear-gradient(180deg, var(--card), var(--card-2)); border:1px solid #162136; border-radius:18px; padding:1rem; box-shadow:var(--shadow); position:relative; overflow:hidden}
-    .card:hover{transform:translateY(-2px)}
-    .card .sup{font-size:.8rem; color:var(--fg-dim)}
-    .card h4{margin:.3rem 0 .2rem; font-size:1.05rem}
-    .card p{margin:0; color:var(--fg-dim)}
+    .grid{margin-top:32px;display:grid;gap:20px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+    .tile{backdrop-filter:blur(6px);display:flex;flex-direction:column;justify-content:center;gap:8px;min-height:130px;padding:18px;border:1px solid var(--border);border-radius:var(--radius);background:var(--card);box-shadow:var(--shadow);transition:transform .15s ease,border-color .15s ease,background .15s ease}
+    .tile:hover{transform:translateY(-3px) scale(1.02);border-color:var(--accent);background:rgba(35,55,80,0.8)}
+    .tile span{display:block;font-size:14px;color:var(--muted)}
+    .tile strong{font-size:18px}
 
-    .chiprow{display:flex; gap:.5rem; flex-wrap:wrap; margin-top:.8rem}
-    .chip{font-size:.78rem; color:var(--fg); padding:.35rem .55rem; border-radius:999px; border:1px solid #22324c;
-          background:linear-gradient(180deg, #0f1626, #0b1220)}
+    footer{margin-top:40px;text-align:center;color:var(--muted);font-size:12px}
+    code{background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:8px;padding:2px 6px}
 
-    /* =====================
-       SECTION: LABS / PROJECTS
-       ===================== */
-    .project{display:flex; flex-direction:column; gap:.7rem}
-    .project .thumb{border-radius:14px; border:1px solid #162136; aspect-ratio: 16/9; background:
-      linear-gradient(180deg, #0c1322, #0a111d),
-      repeating-linear-gradient(135deg, #0e1626 0 2px, #0b1220 2px 4px)}
-
-    /* =====================
-       UTILITIES
-       ===================== */
-    .muted{color:var(--fg-dim)}
-    .spacer{height:1px; background:#152038; margin:1.2rem 0}
-    .hide-sm{display:none}
-    @media(min-width:900px){.hide-sm{display:initial}}
-
-    /* =====================
-       FOOTER
-       ===================== */
-    footer{padding:2rem 0; border-top:1px solid #162136; color:var(--fg-dim)}
-    .footgrid{display:grid; gap:1.2rem; grid-template-columns:1fr}
-    @media(min-width:900px){.footgrid{grid-template-columns: 1.2fr .8fr .8fr}}
-    .copyright{margin-top:1rem; font-size:.9rem}
-      /* Subtle hero variant */
-    .hero.subtle{padding: clamp(1rem, 3vw, 2rem) 0}
-    .hero-card.subtle{background:linear-gradient(180deg, #0c1420, #0a101a); border:1px solid #142235; box-shadow:0 6px 18px rgba(0,0,0,.28)}
+    /* Respect motion preferences */
+    @media (prefers-reduced-motion: reduce){
+      body{animation:none}
+    }
   </style>
 </head>
 <body>
-  <!-- Background layers -->
-  <div class="bg-wrap" aria-hidden="true">
-    <div class="bg-gradient"></div>
-    <canvas id="net"></canvas>
+  <canvas id="rainCanvas" aria-hidden="true"></canvas>
+
+  <div class="wrap">
+    <header>
+      <h1>CySA+ Domains</h1>
+      <p class="tag">Tap a glowing card to explore each domain. Customize URLs in the HTML.</p>
+    </header>
+
+    <main class="grid">
+      <a class="tile" href="security-operations.html">
+        <span>Domain 1</span>
+        <strong>Security Operations</strong>
+      </a>
+      <a class="tile" href="vulnerability-management.html">
+        <span>Domain 2</span>
+        <strong>Vulnerability Management</strong>
+      </a>
+      <a class="tile" href="incident-response.html">
+        <span>Domain 3</span>
+        <strong>Incident Response Management</strong>
+      </a>
+      <a class="tile" href="reporting-communication.html">
+        <span>Domain 4</span>
+        <strong>Reporting &amp; Communication</strong>
+      </a>
+      <a class="tile" href="career-advancement.html">
+        <span>Domain 5</span>
+        <strong>Career Advancement</strong>
+      </a>
+    </main>
+
+    <footer>
+      Edit labels or links directly in the HTML file. Example: <code>&lt;a class="tile" href="/your/url"&gt;...&lt;/a&gt;</code>
+    </footer>
   </div>
 
-  <!-- Header / Navigation -->
-  <header>
-    <div class="container nav">
-      <div class="brand">
-        <div class="logo" aria-hidden="true"></div>
-        <h1>Tech&nbsp;Nexus</h1>
-      </div>
-      <nav class="nav-links">
-        <a href="#topics">Topics</a>
-        <a href="#labs">Labs</a>
-        <a href="#resources">Resources</a>
-        <button class="toggle" id="modeToggle" aria-label="Toggle color mode">Toggle</button>
-      </nav>
-    </div>
-  </header>
-
-  <!-- Hero (subtle module) -->
-  <section class="hero container subtle">
-    <div class="hero-card subtle">
-      <div class="hero-inner" style="display:flex; align-items:center; gap:1rem">
-        <div style="flex:1">
-          <div class="kicker"><span class="dot"></span><span class="muted">Futuristic • Minimal • Focused</span></div>
-          <h2 style="margin:.2rem 0 0; font-size:clamp(1.35rem,3.4vw,2.2rem)">Tech Nexus — ship clean, modular content.</h2>
-          <p style="margin:.5rem 0 0" class="muted">A quiet hero: fewer shadows, softer gradient, and compact spacing to keep the spotlight on your modules.</p>
-          <div class="cta" style="margin-top:.7rem">
-            <a class="btn primary" href="#resources">Explore Resources</a>
-            <a class="btn" href="#">Learn More</a>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Newsletter CTA (kept) -->
-  <div class="container"><div class="spacer" role="separator"></div></div>
-  <section class="container" id="resources">
-    <div class="section-title">
-      <h3>Starter Resources</h3>
-      <span class="muted">Swap these with your own links.</span>
-    </div>
-    <div class="grid cols-3">
-      <article class="card reveal">
-        <div class="sup">Templates</div>
-        <h4>Checklists & SOPs</h4>
-        <p class="muted">Deployment reviews, IR checklists, runbooks.</p>
-      </article>
-      <article class="card reveal">
-        <div class="sup">Tools</div>
-        <h4>CLI & Dashboards</h4>
-        <p class="muted">Tiny utils for daily workflows. Ready to fork.</p>
-      </article>
-      <article class="card reveal">
-        <div class="sup">Community</div>
-        <h4>Study Groups</h4>
-        <p class="muted">Weekly deep‑dives by domain.</p>
-      </article>
-    </div>
-  </section>
-
-  <!-- Footer -->
-  <footer class="container">
-    <div class="footgrid">
-      <div>
-        <div class="brand" style="margin-bottom:.8rem">
-          <div class="logo" aria-hidden="true"></div>
-          <strong>Tech&nbsp;Nexus</strong>
-        </div>
-        <p class="muted">Built with performance and clarity in mind. Replace content with your topics, labs, and links.</p>
-      </div>
-      <div>
-        <strong>Explore</strong>
-        <div class="stack-6" style="margin-top:.6rem">
-          <a href="#topics">Topics</a>
-          <a href="#labs">Labs</a>
-          <a href="#resources">Resources</a>
-        </div>
-      </div>
-      <div>
-        <strong>Connect</strong>
-        <div class="stack-6" style="margin-top:.6rem">
-          <a href="#">GitHub</a>
-          <a href="#">LinkedIn</a>
-          <a href="#">Contact</a>
-        </div>
-      </div>
-    </div>
-    <div class="copyright">© <span id="year"></span> Tech Nexus. All rights reserved.</div>
-  </footer>
-
   <script>
-    // ===== Year =====
-    document.getElementById('year').textContent = new Date().getFullYear();
+    (function(){
+      const canvas = document.getElementById('rainCanvas');
+      const ctx = canvas.getContext('2d');
+      let width, height, columns, drops, fontSize, dpr;
 
-    // ===== Mode Toggle (dark remains default; toggle just adds a glow accent variant) =====
-    const toggle = document.getElementById('modeToggle');
-    let alt = false;
-    toggle.addEventListener('click', () => {
-      alt = !alt;
-      document.documentElement.style.setProperty('--accent', alt ? '#b08cff' : '#7cf3ff');
-      document.documentElement.style.setProperty('--accent-2', alt ? '#ff9ef0' : '#77ffb3');
-    });
+      const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      const glyphs = chars.split('');
 
-    // ===== Reveal on scroll =====
-    const observer = new IntersectionObserver((entries)=>{
-      entries.forEach(e=>{
-        if(e.isIntersecting){
-          e.target.animate([
-            {opacity:0, transform:'translateY(10px)'},
-            {opacity:1, transform:'translateY(0)'}
-          ], {duration:500, easing:'cubic-bezier(.2,.7,.2,1)', fill:'forwards'});
-          observer.unobserve(e.target);
-        }
-      })
-    }, {threshold:.15});
-    document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
-
-    // ===== Particle Network Background (tiny and efficient) =====
-    const canvas = document.getElementById('net');
-    const ctx = canvas.getContext('2d');
-    let w,h, points=[]; const D=90; const N=90; // density and neighbors
-
-    function resize(){ w = canvas.width = innerWidth; h = canvas.height = innerHeight; if(points.length===0) init(); }
-    function init(){
-      points = Array.from({length: Math.min(N, Math.floor((w*h)/16000))}, ()=>({
-        x: Math.random()*w,
-        y: Math.random()*h,
-        vx:(Math.random()-.5)*.35,
-        vy:(Math.random()-.5)*.35
-      }));
-    }
-    function step(){
-      ctx.clearRect(0,0,w,h);
-      // draw points
-      ctx.globalAlpha=.8; ctx.fillStyle='rgba(124,243,255,.7)';
-      for(const p of points){
-        p.x+=p.vx; p.y+=p.vy;
-        if(p.x<0||p.x>w) p.vx*=-1; if(p.y<0||p.y>h) p.vy*=-1;
-        ctx.beginPath(); ctx.arc(p.x,p.y,1.2,0,Math.PI*2); ctx.fill();
+      function setup(){
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
+        width = canvas.clientWidth = window.innerWidth;
+        height = canvas.clientHeight = window.innerHeight;
+        canvas.width = Math.floor(width * dpr);
+        canvas.height = Math.floor(height * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        fontSize = Math.max(12, Math.min(18, Math.floor(width/60)));
+        columns = Math.ceil(width / fontSize);
+        drops = new Array(columns).fill(0).map(()=> Math.floor(Math.random()*height));
+        ctx.font = `${fontSize}px monospace`;
       }
-      // draw links
-      ctx.globalAlpha=.10; ctx.strokeStyle='rgba(124,243,255,.6)';
-      for(let i=0;i<points.length;i++){
-        for(let j=i+1;j<points.length;j++){
-          const a=points[i], b=points[j];
-          const dx=a.x-b.x, dy=a.y-b.y; const dist=Math.hypot(dx,dy);
-          if(dist < D){ ctx.lineWidth = 1 - (dist/D); ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke(); }
+
+      let last = 0;
+      const frameMs = 1000/24; // ~24fps for subtle motion & battery friendliness
+
+      function draw(ts){
+        if(window.matchMedia('(prefers-reduced-motion: reduce)').matches) return; // stop animating
+        if(ts - last < frameMs){ requestAnimationFrame(draw); return; }
+        last = ts;
+
+        // Fade the entire canvas slightly to create trailing effect
+        ctx.fillStyle = 'rgba(0, 8, 14, 0.10)';
+        ctx.fillRect(0, 0, width, height);
+
+        for(let i=0;i<columns;i++){
+          const x = i * fontSize;
+          const y = drops[i] * fontSize;
+          const char = glyphs[(Math.random()*glyphs.length)|0];
+
+          // soft green glow
+          ctx.fillStyle = 'rgba(120, 255, 180, 0.55)';
+          ctx.fillText(char, x, y);
+
+          // randomly reset to create varied streams
+          if(y > height && Math.random() > 0.975){ drops[i] = 0; }
+          drops[i]++;
         }
+        requestAnimationFrame(draw);
       }
-      requestAnimationFrame(step);
-    }
-    addEventListener('resize', resize);
-    resize(); init(); step();
-      </script>
+
+      window.addEventListener('resize', setup);
+      setup();
+      requestAnimationFrame(draw);
+    })();
+  </script>
 </body>
 </html>
