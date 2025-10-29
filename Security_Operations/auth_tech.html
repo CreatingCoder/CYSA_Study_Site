@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Auth Tech — Matching Quiz (OpenID, OAuth, OIDC, SAML, Facebook Login)</title>
+<style>
+  :root{
+    --bg:#0d1117; --card:#161b22; --ink:#e6edf3; --muted:#9fb1c3;
+    --border:#263042; --ok-glow:#2ea043; --bad-glow:#ff6b6b; --chip:#121821;
+    --radius:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;overflow-x:hidden}
+  .wrap{max-width:1100px;margin:0 auto;padding:18px}
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+  h1{font-size:18px;margin:0;font-weight:700}
+  .btn{
+    background:#1b2230;border:1px solid var(--border);color:var(--ink);
+    padding:8px 12px;border-radius:10px;font-weight:600;cursor:pointer
+  }
+  .btn:active{transform:translateY(1px)}
+  .grid{display:grid;gap:14px}
+  @media (min-width:720px){ .grid{grid-template-columns:1fr 1fr} }
+  .col{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:12px}
+  .col h2{font-size:14px;margin:0 0 10px;color:var(--muted);font-weight:700}
+  .list,.targets{display:grid;gap:10px}
+  .item{
+    border:1px solid var(--border);border-radius:12px;background:var(--chip);
+    padding:10px 12px;font-weight:700;display:flex;justify-content:space-between;align-items:center;
+    cursor:grab;user-select:none
+  }
+  .abbr{font-size:12px;color:#9cc1ff;background:#0f1722;border:1px solid #23324a;border-radius:999px;padding:2px 8px}
+  .target{
+    background:var(--chip);border:1px solid var(--border);border-radius:12px;
+    padding:10px 12px;position:relative;transition:outline .25s ease, box-shadow .25s ease;
+  }
+  .desc{color:var(--ink);font-size:14px;line-height:1.25}
+  .ghost{opacity:.35}
+  .is-correct{ outline:2px solid var(--ok-glow); box-shadow:0 0 6px rgba(46,160,67,.4); }
+  .flash-wrong{ animation:wrong .45s ease; }
+  @keyframes wrong{
+    0%{outline:2px solid transparent}
+    20%,80%{outline:2px solid var(--bad-glow);box-shadow:0 0 8px rgba(255,107,107,.4);transform:translateX(0)}
+    30%,70%{transform:translateX(-3px)}
+    50%{transform:translateX(3px)}
+    100%{transform:translateX(0)}
+  }
+  .overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,.7);
+    display:flex;align-items:center;justify-content:center;
+    z-index:10;animation:fadeIn .4s ease;
+  }
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .popup{
+    background:#161b22;padding:40px 60px;border-radius:16px;
+    text-align:center;box-shadow:0 0 20px rgba(46,160,67,.4);
+    animation:pop .5s ease;
+  }
+  @keyframes pop{0%{transform:scale(.8);opacity:0}100%{transform:scale(1);opacity:1}}
+  .popup h2{color:#2ea043;margin:0 0 10px;font-size:28px}
+  .popup p{color:var(--muted);margin:0 0 20px}
+  .popup button{background:#2ea043;color:white;border:none;padding:10px 20px;border-radius:10px;font-weight:700;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Match the Auth Technologies to Their Descriptions</h1>
+    <div class="actions">
+      <button class="btn" id="shuffleBtn">Shuffle / Reset</button>
+      <span style="margin-left:8px;color:var(--muted);font-weight:700">Score: <span id="score">0/0</span></span>
+    </div>
+  </header>
+
+  <section class="grid">
+    <div class="col">
+      <h2>Technologies</h2>
+      <div class="list" id="list"></div>
+    </div>
+    <div class="col">
+      <h2>Descriptions</h2>
+      <div class="targets" id="targets"></div>
+    </div>
+  </section>
+</div>
+
+<script>
+// ===== Auth tech pairs =====
+const PAIRS = [
+  { id:"OPENID", term:"OpenID (legacy)", abbr:"Auth (legacy)",
+    desc:"Early decentralized authentication protocol where users logged in with a URL/identity at an OpenID Provider. Largely superseded today." },
+  { id:"OAUTH2", term:"OAuth 2.0", abbr:"Authorization",
+    desc:"Delegated authorization framework: lets an app get scoped access to a resource on a user’s behalf via tokens (not an authentication protocol by itself)." },
+  { id:"OIDC", term:"OpenID Connect (OIDC)", abbr:"AuthN on OAuth2",
+    desc:"Authentication layer on top of OAuth 2.0 using ID Tokens (JWT) and the /userinfo endpoint for standardized login and identity." },
+  { id:"SAML2", term:"SAML 2.0", abbr:"Enterprise SSO",
+    desc:"XML-based federation/SSO standard commonly used in enterprises; identity is asserted via signed SAML assertions between IdP and SP." },
+  { id:"FBLOGIN", term:"Facebook Login / Connect", abbr:"Social login",
+    desc:"Provider-specific social login built on OAuth 2.0 with Facebook as the IdP; apps obtain tokens and profile data via Graph APIs." },
+];
+
+const listEl = document.getElementById('list');
+const targetsEl = document.getElementById('targets');
+const scoreEl = document.getElementById('score');
+const shuffleBtn = document.getElementById('shuffleBtn');
+
+let placements = new Map();
+let selectedChip = null;
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+
+function init(){
+  placements.clear();
+  selectedChip = null;
+  render();
+  updateScore();
+  removeCongrats();
+}
+
+function render(){
+  listEl.innerHTML = '';
+  targetsEl.innerHTML = '';
+
+  // Left: technology chips
+  for(const p of shuffle(PAIRS)){
+    const chip = document.createElement('div');
+    chip.className = 'item';
+    chip.tabIndex = 0;
+    chip.draggable = true;
+    chip.dataset.pairId = p.id;
+    chip.innerHTML = `<span>${p.term}</span><span class="abbr">${p.abbr}</span>`;
+
+    chip.addEventListener('dragstart', e=>{
+      e.dataTransfer.setData('text/plain', p.id);
+    });
+
+    chip.addEventListener('click', ()=>{
+      const wasGhost = chip.classList.contains('ghost');
+      document.querySelectorAll('.item').forEach(c=>c.classList.remove('ghost'));
+      if(!wasGhost){ chip.classList.add('ghost'); selectedChip = chip; }
+      else{ selectedChip = null; }
+    });
+
+    listEl.appendChild(chip);
+  }
+
+  // Right: description targets
+  for(const p of shuffle(PAIRS)){
+    const wrap = document.createElement('div');
+    wrap.className = 'target';
+    wrap.dataset.targetId = p.id;
+
+    const desc = document.createElement('div');
+    desc.className = 'desc';
+    desc.textContent = p.desc;
+
+    wrap.appendChild(desc);
+    targetsEl.appendChild(wrap);
+
+    wrap.addEventListener('dragover', e=> e.preventDefault());
+    wrap.addEventListener('drop', e=>{
+      e.preventDefault();
+      const pairId = e.dataTransfer.getData('text/plain');
+      attemptPlace(pairId, wrap);
+    });
+
+    wrap.addEventListener('click', ()=>{
+      if(!selectedChip) return;
+      attemptPlace(selectedChip.dataset.pairId, wrap);
+    });
+
+    wrap.addEventListener('keydown', e=>{
+      if((e.key==='Enter'||e.key===' ') && selectedChip){
+        e.preventDefault();
+        attemptPlace(selectedChip.dataset.pairId, wrap);
+      }
+    });
+  }
+}
+
+function attemptPlace(pairId, targetEl){
+  const targetId = targetEl.dataset.targetId;
+  if(placements.has(targetId)) return;
+
+  const chip = document.querySelector(`.item[data-pair-id="${pairId}"]`);
+  if(!chip) return;
+
+  if(pairId === targetId){
+    placements.set(targetId, pairId);
+    targetEl.classList.add('is-correct');
+    chip.setAttribute('aria-disabled','true');
+    chip.style.pointerEvents = 'none';
+    chip.classList.add('ghost');
+    selectedChip = null;
+  } else {
+    flashWrong(targetEl);
+    chip.classList.remove('ghost');
+    selectedChip = null;
+  }
+  updateScore();
+}
+
+function flashWrong(targetEl){
+  targetEl.classList.remove('is-correct');
+  targetEl.classList.add('flash-wrong');
+  setTimeout(()=> targetEl.classList.remove('flash-wrong'), 480);
+}
+
+function updateScore(){
+  const total = PAIRS.length;
+  const correct = placements.size;
+  scoreEl.textContent = `${correct}/${total}`;
+  if(correct === total) showCongrats();
+}
+
+function showCongrats(){
+  const overlay = document.createElement('div');
+  overlay.className = 'overlay';
+  overlay.innerHTML = `
+    <div class="popup">
+      <h2>🎉 Congratulations! 🎉</h2>
+      <p>You nailed the differences between OpenID, OAuth 2.0, OIDC, SAML, and Facebook Login.</p>
+      <button onclick="init()">Play Again</button>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+function removeCongrats(){
+  const o = document.querySelector('.overlay');
+  if(o) o.remove();
+}
+
+shuffleBtn.addEventListener('click', init);
+init();
+</script>
+</body>
+</html>
