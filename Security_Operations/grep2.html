@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CySA+ — GREP Command Quiz</title>
+<style>
+:root{--bg:#0b0d10;--card:#12161b;--text:#e6edf3;--muted:#9fb0c0;--border:#1c2229;--accent:#65c7ff;--good:#23c483;--bad:#ff6b6b;--radius:16px}
+body{margin:0;background:#0b0d10;color:var(--text);font:16px/1.55 system-ui,-apple-system,Segoe UI,Inter,Arial,sans-serif}
+.wrap{max-width:800px;margin:auto;padding:20px}
+.q{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin:20px 0;transition:0.3s}
+.q.correct{outline:2px solid var(--good)}
+.opts{display:grid;gap:10px;margin-top:12px}
+.opt{border:1px solid var(--border);border-radius:10px;padding:10px 12px;background:#0f141a;cursor:pointer;transition:0.3s}
+.opt.correct{border-color:var(--good)}
+.opt.wrong{border-color:var(--bad)}
+.expl{margin-top:10px;color:var(--muted);display:none}
+.expl.show{display:block}
+.nav{display:flex;justify-content:space-between;margin-top:16px}
+.btn{border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:999px;padding:10px 14px;cursor:pointer}
+.bar{height:10px;border-radius:6px;background:#0e1318;border:1px solid var(--border);overflow:hidden;margin-top:20px}
+.bar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--good),#25d0a0);transition:width .3s ease}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>GREP Command Quiz</h1>
+<p class="muted">Identify what each grep command does. (Keep guessing until you get it right!)</p>
+<div id="quiz"></div>
+<div class="bar"><i id="barFill"></i></div>
+</div>
+<script>
+const QUESTIONS=[
+{cmd:"grep -i 'error' /var/log/syslog",choices:["Displays only lines containing 'error' case-sensitive","Displays lines containing 'error' ignoring case","Shows file names only that contain 'error'","Deletes lines containing 'error'"],answer:1,explain:"-i ignores case sensitivity, matching 'Error', 'ERROR', etc."},
+{cmd:"grep -r 'password' /etc",choices:["Searches current file for 'password'","Recursively searches /etc directory for 'password'","Searches for 'password' only in subfolders named 'etc'","Displays lines not matching 'password'"],answer:1,explain:"-r recursively searches through subdirectories."},
+{cmd:"grep -v 'INFO' app.log",choices:["Prints only lines with 'INFO'","Prints lines without 'INFO'","Counts occurrences of 'INFO'","Highlights 'INFO' matches"],answer:1,explain:"-v inverts match to show non-matching lines."},
+{cmd:"grep -E 'fail|error|critical' server.log",choices:["Uses basic regex to find exact '|' characters","Searches for any of the words fail, error, or critical","Searches for lines that contain all three words","Filters only the first match"],answer:1,explain:"-E enables extended regex; the | acts as OR."},
+{cmd:"grep -n 'root' /etc/passwd",choices:["Shows only line numbers","Displays matching lines with line numbers","Shows count of matches","Writes output to /etc/passwd"],answer:1,explain:"-n prefixes each match with its line number."},
+{cmd:"grep -c 'session' auth.log",choices:["Shows all matching lines","Counts how many lines match","Counts total words","Highlights sessions in color"],answer:1,explain:"-c counts matches instead of printing them."},
+{cmd:"grep -A2 'ERROR' app.log",choices:["Shows only matching lines","Shows 2 lines before each match","Shows 2 lines after each match","Shows only first 2 matches"],answer:2,explain:"-A prints specified lines After a match."},
+{cmd:"grep -B3 'timeout' service.log",choices:["Prints 3 lines before each match","Prints 3 lines after each match","Prints 3 lines before and after each match","Shows only first 3 matches"],answer:0,explain:"-B prints lines Before the match."},
+{cmd:"grep -C1 'login' secure.log",choices:["Shows 1 line of context before and after matches","Counts number of matches","Displays only non-matching lines","Shows first match only"],answer:0,explain:"-C prints context before and after matches."},
+{cmd:"grep -l 'confidential' *.txt",choices:["Lists only file names with a match","Lists all lines that match","Lists line numbers","Deletes files without match"],answer:0,explain:"-l prints only filenames that contain matches."}
+];
+const quiz=document.getElementById('quiz'),bar=document.getElementById('barFill');let i=0,correct=0;
+function render(){
+quiz.innerHTML='';
+const q=QUESTIONS[i];
+const card=document.createElement('div');card.className='q';
+card.innerHTML=`<h2>${i+1}. What does this command do?</h2><pre>${q.cmd}</pre>`;
+const opts=document.createElement('div');opts.className='opts';
+q.choices.forEach((c,idx)=>{const l=document.createElement('label');l.className='opt';l.textContent=c;l.onclick=()=>ans(idx,l,card,q);opts.appendChild(l);});
+card.appendChild(opts);
+const expl=document.createElement('div');expl.className='expl';expl.textContent=q.explain;card.appendChild(expl);
+const nav=document.createElement('div');nav.className='nav';
+const back=document.createElement('button');back.className='btn';back.textContent='Back';back.disabled=i===0;back.onclick=()=>{i--;render();};
+const next=document.createElement('button');next.className='btn';next.textContent=i<QUESTIONS.length-1?'Next':'Finish';next.onclick=()=>{if(i<QUESTIONS.length-1)i++;render();};
+nav.append(back,next);card.appendChild(nav);
+quiz.appendChild(card);
+}
+function ans(a,label,card,q){
+if(card.dataset.correct)return; // lock only after correct
+if(a===q.answer){
+label.classList.add('correct');
+card.classList.add('correct');
+card.dataset.correct=true;
+card.querySelector('.expl').classList.add('show');
+correct++;
+bar.style.width=`${(correct/QUESTIONS.length)*100}%`;
+}else{
+label.classList.add('wrong');
+setTimeout(()=>label.classList.remove('wrong'),600); // flash red briefly
+}
+}
+render();
+</script>
+</body>
+</html>
