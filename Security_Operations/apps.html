@@ -143,7 +143,12 @@ function check(id, box, chip){
 
 function congrats(){
   const overlay=document.createElement('div'); overlay.className='overlay';
-  overlay.innerHTML=`<div class="popup"><h2>🎉 Nice work!</h2><p>All matches complete.</p><button onclick="overlay.remove();init()">Replay</button></div>`;
+  /* FIX: use this.closest('.overlay') so the handler has scope */
+  overlay.innerHTML=`<div class="popup">
+    <h2>🎉 Nice work!</h2>
+    <p>All matches complete.</p>
+    <button onclick="this.closest('.overlay').remove();init()">Replay</button>
+  </div>`;
   document.body.appendChild(overlay);
 }
 
