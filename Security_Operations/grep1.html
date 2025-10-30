@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>grep Essentials — CySA+ Quiz</title>
+<style>
+  :root{
+    --bg:#0d1117; --card:#161b22; --ink:#e6edf3;
+    --muted:#9fb1c3; --border:#263042;
+    --ok-glow:#2ea043; --bad-glow:#ff6b6b; --chip:#121821;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
+  .wrap{max-width:900px;margin:0 auto;padding:20px}
+  header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+  h1{font-size:18px;font-weight:700;margin:0}
+  .btn{
+    background:#1b2230;border:1px solid var(--border);
+    color:var(--ink);padding:8px 12px;border-radius:10px;
+    font-weight:600;cursor:pointer
+  }
+  .grid{display:grid;gap:14px}
+  @media(min-width:720px){.grid{grid-template-columns:1fr 1fr}}
+  .col{background:var(--card);border:1px solid var(--border);
+    border-radius:12px;padding:12px}
+  .col h2{font-size:14px;color:var(--muted);margin:0 0 10px}
+  .list,.targets{display:grid;gap:10px}
+  .item{
+    border:1px solid var(--border);border-radius:10px;background:var(--chip);
+    padding:10px 12px;font-weight:700;cursor:grab;user-select:none
+  }
+  .target{
+    background:var(--chip);border:1px solid var(--border);
+    border-radius:10px;padding:10px 12px;
+    transition:outline .25s ease, box-shadow .25s ease;
+  }
+  .desc{font-size:14px}
+  .is-correct{outline:2px solid var(--ok-glow);box-shadow:0 0 6px rgba(46,160,67,.4)}
+  .flash-wrong{animation:wrong .45s ease}
+  @keyframes wrong{
+    0%{outline:2px solid transparent}
+    25%,75%{outline:2px solid var(--bad-glow);box-shadow:0 0 6px rgba(255,107,107,.4)}
+    100%{outline:2px solid transparent}
+  }
+  .overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,.7);
+    display:flex;align-items:center;justify-content:center;z-index:10;
+  }
+  .popup{
+    background:#161b22;padding:30px 40px;border-radius:16px;
+    text-align:center;box-shadow:0 0 20px rgba(46,160,67,.4);
+  }
+  .popup h2{color:#2ea043;margin:0 0 10px}
+  .popup button{background:#2ea043;color:white;border:none;
+    padding:10px 20px;border-radius:10px;font-weight:700;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Match <code>grep</code> Options to Their Meaning (CySA+ Essentials)</h1>
+    <button class="btn" id="resetBtn">Reset</button>
+  </header>
+
+  <section class="grid">
+    <div class="col">
+      <h2>Options</h2>
+      <div class="list" id="list"></div>
+    </div>
+    <div class="col">
+      <h2>Descriptions</h2>
+      <div class="targets" id="targets"></div>
+    </div>
+  </section>
+</div>
+
+<script>
+const PAIRS = [
+  {id:"i", term:"-i", desc:"Ignore case distinctions when searching."},
+  {id:"v", term:"-v", desc:"Invert match — show lines that do NOT match."},
+  {id:"n", term:"-n", desc:"Show line numbers with matching lines."},
+  {id:"r", term:"-r / -R", desc:"Search recursively through directories."},
+  {id:"E", term:"-E", desc:"Use extended regular expressions."},
+  {id:"w", term:"-w", desc:"Match whole words only."},
+  {id:"c", term:"-c", desc:"Count the number of matching lines."},
+  {id:"A", term:"-A / -B / -C", desc:"Show context lines before/after matches."}
+];
+
+const list = document.getElementById("list");
+const targets = document.getElementById("targets");
+const resetBtn = document.getElementById("resetBtn");
+
+let placed = new Map();
+
+function shuffle(a){return a.sort(()=>Math.random()-0.5)}
+
+function init(){
+  placed.clear();
+  list.innerHTML=""; targets.innerHTML="";
+  for(const p of shuffle(PAIRS)){
+    const item=document.createElement("div");
+    item.className="item"; item.textContent=p.term;
+    item.draggable=true; item.dataset.id=p.id;
+    item.addEventListener("dragstart",e=>e.dataTransfer.setData("text/plain",p.id));
+    list.appendChild(item);
+  }
+  for(const p of shuffle(PAIRS)){
+    const box=document.createElement("div");
+    box.className="target"; box.dataset.id=p.id;
+    box.innerHTML=`<div class="desc">${p.desc}</div>`;
+    box.addEventListener("dragover",e=>e.preventDefault());
+    box.addEventListener("drop",e=>{
+      e.preventDefault();
+      const dragId=e.dataTransfer.getData("text/plain");
+      check(dragId, box);
+    });
+    targets.appendChild(box);
+  }
+}
+
+function check(id, box){
+  if(placed.has(box.dataset.id))return;
+  const correct=box.dataset.id===id;
+  const chip=document.querySelector(`.item[data-id='${id}']`);
+  if(correct){
+    box.classList.add("is-correct");
+    chip.style.opacity=".4"; chip.draggable=false;
+    placed.set(id,true);
+    if(placed.size===PAIRS.length)congrats();
+  }else{
+    box.classList.add("flash-wrong");
+    setTimeout(()=>box.classList.remove("flash-wrong"),500);
+  }
+}
+
+function congrats(){
+  const overlay=document.createElement("div");
+  overlay.className="overlay";
+  overlay.innerHTML=`<div class="popup"><h2>🎉 Great job!</h2>
+    <p>You matched all essential <code>grep</code> options!</p>
+    <button onclick="overlay.remove();init()">Play Again</button></div>`;
+  document.body.appendChild(overlay);
+}
+
+resetBtn.onclick=init;
+init();
+</script>
+</body>
+</html>
