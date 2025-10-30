@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CySA+ — Log Analysis MCQ (One‑at‑a‑Time)</title>
+  <meta name="description" content="Realistic multi‑source logs. One question per screen. Mobile‑friendly dark‑mode CySA+ practice." />
+  <style>
+    :root{ --bg:#0b0d10; --card:#12161b; --muted:#9fb0c0; --text:#e6edf3; --border:#1c2229; --accent:#65c7ff; --good:#23c483; --bad:#ff6b6b; --radius:16px; --shadow:0 10px 30px rgba(0,0,0,.35); }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:radial-gradient(120% 120% at 10% 10%, #0e1217, #0b0d10);color:var(--text);font:16px/1.55 system-ui,-apple-system,Segoe UI,Inter,Arial,sans-serif}
+    header{position:sticky;top:0;z-index:5;background:linear-gradient(180deg, rgba(11,13,16,.95) 0%, rgba(11,13,16,.75) 100%);backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
+    .wrap{max-width:980px;margin-inline:auto;padding:18px}
+    h1{margin:0;font-size:clamp(20px,3.2vw,28px)}
+    .tag{color:var(--muted);font-size:14px;margin-top:6px}
+    .controls{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+    .btn{cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:999px;padding:10px 14px;box-shadow:var(--shadow)}
+
+    main{padding:14px 18px 96px}
+    .q{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;margin:14px 0}
+    .q.correct{outline:2px solid var(--good)}.q.wrong{outline:2px solid var(--bad)}
+    .q h2{margin:0 0 8px 0;font-size:16px}
+    .log{background:#0e1318;border:1px solid var(--border);border-radius:12px;padding:12px;overflow:auto;-webkit-overflow-scrolling:touch;font-family:ui-monospace,Consolas,Menlo,monospace;font-size:12.75px;line-height:1.45;max-height:50vh;white-space:pre-wrap}
+    .opts{display:grid;gap:8px;margin-top:12px}
+    .opt{display:flex;align-items:center;gap:10px;border:1px solid var(--border);border-radius:12px;padding:10px 12px;background:#0f141a;cursor:pointer}
+    .opt input{accent-color:var(--accent)}
+    .opt.correct{border-color:var(--good)}.opt.wrong{border-color:var(--bad)}
+    .expl{margin-top:10px;color:var(--muted);font-size:14px;display:none}.expl.show{display:block}
+
+    .nav{display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between;margin-top:14px}
+    .nav .left, .nav .right{display:flex;gap:10px}
+    .index{color:var(--muted);font-size:14px;align-self:center}
+
+    .progress{position:sticky;bottom:0;z-index:10;display:flex;align-items:center;gap:10px;background:linear-gradient(180deg, rgba(11,13,16,0) 0%, rgba(11,13,16,0.9) 30%);backdrop-filter:blur(6px);padding:12px 18px;border-top:1px solid var(--border)}
+    .bar{flex:1;height:10px;border-radius:999px;background:#0e1318;border:1px solid var(--border);overflow:hidden}
+    .bar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--good),#25d0a0);transition:width .3s ease}
+    .mini{display:flex;gap:6px;align-items:center;color:var(--muted);font-size:13px}
+    .done{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(5,8,12,0.75);backdrop-filter:blur(4px);z-index:20}
+    .done.show{display:flex}
+    .modal{background:var(--card);border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow);padding:24px;text-align:center;max-width:520px}
+
+    @media(max-width:700px){body{font-size:15px}.wrap{padding:14px}.btn{flex:1;padding:12px 14px}.q{padding:14px}.log{font-size:12.2px}.opt{padding:14px;min-height:48px}.opt input{width:20px;height:20px}.modal{margin:12px}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>CySA+ Log Analysis — One‑at‑a‑Time</h1>
+      <div class="tag">Read realistic logs and choose the best description of the activity.</div>
+      <div class="controls">
+        <button class="btn" id="shuffleBtn">Shuffle</button>
+        <button class="btn" id="resetBtn">Reset</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap" id="quiz"></main>
+
+  <div class="wrap progress"><div class="bar"><i id="barFill"></i></div><div class="mini"><span id="score">0</span>/<span id="total">0</span> correct</div></div>
+
+  <div class="done" id="done"><div class="modal"><h3>Great work! 🎯</h3><p>You've completed all questions.</p><button class="btn" id="againBtn">Shuffle & Replay</button></div></div>
+
+  <script>
+    // Same 20 realistic questions from previous version
+    const QUESTIONS = [
+      { id:'q1', prompt:'Apache access.log (combined) — what activity fits?',
+        log:`198.51.100.77 - - [04/Oct/2025:12:55:21 +0000] "GET /products.php?id=1%20UNION%20SELECT%20user,pass%20FROM%20users--%20 HTTP/1.1" 500 321 "-" "curl/8.7"\n198.51.100.77 - - [04/Oct/2025:12:55:22 +0000] "GET /?q=%3Cscript%3Ealert(1)%3C/script%3E HTTP/1.1" 400 0 "-" "curl/8.7"`,
+        choices:['Normal product browse','SQLi and XSS probing','Web shell callback','Search engine bot'], answer:1,
+        explain:'UNION SELECT + reflected <script> payloads show SQL injection & XSS testing.' },
+      { id:'q2', prompt:'Linux /var/log/auth.log — what does this indicate?',
+        log:`Oct  4 02:11:02 srv1 sshd[21841]: Failed password for invalid user admin from 203.0.113.45 port 54122 ssh2\nOct  4 02:11:05 srv1 sshd[21841]: Failed password for invalid user test from 203.0.113.45 port 54122 ssh2\nOct  4 02:11:29 srv1 sshd[21841]: Failed password for root from 203.0.113.45 port 54122 ssh2\nOct  4 02:12:01 srv1 sshd[21841]: Accepted password for root from 203.0.113.45 port 54122 ssh2`,
+        choices:['Maintenance login','Password spraying with success','MFA enrollment','Port knocking'], answer:1,
+        explain:'Multiple user attempts then success from same IP = spraying/credential reuse.' },
+      { id:'q3', prompt:'Firewall kernel log — what pattern is this?',
+        log:`Oct 04 09:00:11 fw1 kernel: DENY TCP 198.51.100.14:52312 -> 10.10.10.7:21 SYN\nOct 04 09:00:11 fw1 kernel: DENY TCP 198.51.100.14:52312 -> 10.10.10.7:22 SYN\nOct 04 09:00:11 fw1 kernel: DENY TCP 198.51.100.14:52312 -> 10.10.10.7:23 SYN\nOct 04 09:00:12 fw1 kernel: DENY TCP 198.51.100.14:52313 -> 10.10.10.7:80 SYN\nOct 04 09:00:12 fw1 kernel: DENY TCP 198.51.100.14:52313 -> 10.10.10.7:443 SYN`,
+        choices:['DDoS','TCP port scan','LB health check','Data exfil'], answer:1,
+        explain:'Sequential SYNs to many ports on one host indicate scanning.' },
+      { id:'q4', prompt:'Windows Security.evtx (4688) — what stands out?',
+        log:`EventID:4688 New Process Created\nNewProcessName: C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe\nCommandLine: powershell.exe -NoProfile -WindowStyle Hidden -EncodedCommand SQBtAHAAcgBvAHQAZQBjAHQAIABzAHkAcwB0AGUAbQA=`,
+        choices:['Routine admin script','Suspicious obfuscated PowerShell','Driver install','AV update'], answer:1,
+        explain:'Hidden + -EncodedCommand are strong attacker TTPs.' },
+      { id:'q5', prompt:'Zeek dns.log — what’s happening?',
+        log:`1633351201.111111 C1aB2c host=10.1.5.44 query=lqjskdfhqpwoeirutyalskdjfhasdf.labs.example.net type=TXT answers=("ZmxhZ3M9bG9uZzpwYXlsb2FkLXR4dA==") rcode=NOERROR\n1633351202.222222 C1aB2c host=10.1.5.44 query=zmxhZ3M9bG9uZzpwYXlsb2FkLXR4dA==.labs.example.net type=TXT answers=("bW9yZQ==") rcode=NOERROR`,
+        choices:['Normal TXT lookups','DNS tunneling exfil','OCSP check','DNS amplification'], answer:1,
+        explain:'Long, base64‑like TXT queries/answers = tunneling indicators.' },
+      { id:'q6', prompt:'HTTP proxy — what’s likely?',
+        log:`2025-10-04T14:21:11Z CONNECT unknown-cdn.example:443 10.1.22.8 ALLOW TLS1.2\n2025-10-04T14:22:07Z POST https://unknown-cdn.example/upload bytes=84391112 ct=application/octet-stream user=svc-report`,
+        choices:['Software update','Large outbound transfer (possible exfil)','Cache warm-up','Health check'], answer:1,
+        explain:'Huge POST of octet-stream to unknown host from service account is suspicious.' },
+      { id:'q7', prompt:'Zeek http.log — interpret the pattern',
+        log:`1633353601.000000 C2bC3d id.orig_h=10.0.20.11 id.resp_h=203.0.113.99 method=GET host=c2.example path=/beacon ua=Go-http-client/1.1 status=200 resp_bytes=43\n1633353661.000100 ... (same endpoint)\n1633353721.000200 ... (same endpoint)`,
+        choices:['Beaconing C2 on fixed interval','NTP client','Printer poll','PCAP rotation'], answer:0,
+        explain:'Clock‑like periodic GETs over HTTPS to same URI indicate beaconing.' },
+      { id:'q8', prompt:'AWS CloudTrail — what best fits?',
+        log:`{ "eventTime":"2025-10-04T09:12:33Z","eventSource":"s3.amazonaws.com","eventName":"PutObject","userIdentity":{"accessKeyId":"AKIA...","type":"IAMUser","userName":"svc-report"},"requestParameters":{"bucketName":"ext-bucket-archive","key":"/exports/db-2025-10-04.sql.gz"},"sourceIPAddress":"203.0.113.50" }`,
+        choices:['Routine backup to managed bucket','Unusual upload to external bucket (potential exfil)','ListObjects audit','Glacier restore'], answer:1,
+        explain:'Service user pushing DB export to non-corporate bucket is a red flag.' },
+      { id:'q9', prompt:'AzureAD SignInLogs — choose the best answer',
+        log:`User: alice@corp.example\nApp: Office365\nTime: 2025-10-04 08:00:12Z Location: US-VA IP: 198.51.100.25 Result: Success\nTime: 2025-10-04 08:12:44Z Location: NL-Amsterdam IP: 203.0.113.88 Result: Success\nConditionalAccess: NotApplied`,
+        choices:['Traveling user with VPN split tunnel','Impossible travel alert scenario','Failed logins due to MFA','Service principal login'], answer:1,
+        explain:'Two distant geos within minutes with success = impossible travel.' },
+      { id:'q10', prompt:'Microsoft 365 Unified Audit Log — what is it?',
+        log:`Creation of Inbox rule\nUser: bob@corp.example\nOperation: New-InboxRule\nRule: Name=AutoForwardAll; ForwardTo=external@proton.example; StopProcessingRules=True\nClientIP: 198.51.100.61`,
+        choices:['Benign mailbox cleanup','Exfil via malicious forwarding rule','Transport rule optimization','Mobile device enroll'], answer:1,
+        explain:'Auto-forward to external is a common exfil technique after mailbox compromise.' },
+      { id:'q11', prompt:'Windows Security (4624 & 4672) — what does this combo imply?',
+        log:`4624 An account was successfully logged on\n  Logon Type: 10 (RemoteInteractive)\n  Account Name: administrator\n  Source Network Address: 198.51.100.40\n4672 Special privileges assigned to new logon\n  SeDebugPrivilege; SeTcbPrivilege`,
+        choices:['Normal RDP by helpdesk','Admin RDP with high privileges (potential misuse)','Local console login','Service logon'], answer:1,
+        explain:'Type 10 from external IP plus 4672 suggests privileged remote access worth investigating.' },
+      { id:'q12', prompt:'Windows Kerberos (4769) — what is indicated?',
+        log:`4769 A Kerberos service ticket was requested\n  Service Name: MSSQLSvc/DB01.corp.local:1433\n  Ticket Encryption Type: 0x17 (RC4-HMAC)\n  Client Address: 10.0.30.55\n  Failure Code: 0x0 (OK) repeated for multiple SPNs`,
+        choices:['Time sync issue','Kerberoasting reconnaissance','Password change event','PAC validation error'], answer:1,
+        explain:'Many TGS requests using RC4-HMAC often precede ticket cracking (Kerberoasting).' },
+      { id:'q13', prompt:'arpwatch/syslog — what network issue is this?',
+        log:`arpwatch: changed ethernet address for 10.0.10.5 from 00:11:22:33:44:55 to 66:77:88:99:aa:bb\narpwatch: flip flop 10.0.10.5 66:77:88:99:aa:bb -> 00:11:22:33:44:55`,
+        choices:['DHCP renewal','ARP spoofing / MITM attempt','NIC failover event','IPv6 DAD'], answer:1,
+        explain:'Rapid MAC changes (flip-flop) on same IP indicate ARP spoofing.' },
+      { id:'q14', prompt:'Sysmon Event ID 1 (Process Create) — interpret',
+        log:`UtcTime: 2025-10-04 07:55:11\nImage: C:\\Windows\\System32\\vssadmin.exe\nCommandLine: vssadmin delete shadows /all /quiet\nParentImage: C:\\Windows\\System32\\cmd.exe`,
+        choices:['Shadow copy maintenance','Ransomware precursor deleting VSS','Disk cleanup','Backup job'], answer:1,
+        explain:'Attackers delete Volume Shadow Copies before encrypting to hinder recovery.' },
+      { id:'q15', prompt:'IIS W3C logs + Security (4688) — what fits best?',
+        log:`2025-10-04 10:21:08 192.0.2.10 POST /aspnet_client/system_web/shell.aspx - 80 - 198.51.100.50 Mozilla/5.0 200 0 0 1234\nEventID:4688 New Process Created\nNewProcessName: C:\\Windows\\System32\\cmd.exe\nCommandLine: cmd.exe /c whoami`,
+        choices:['App health check','Web shell upload and command exec','Failed deployment','IIS recycle'], answer:1,
+        explain:'POST to suspicious path followed by cmd.exe indicates web shell activity.' },
+      { id:'q16', prompt:'Windows 5140 + 4698 — what sequence is this?',
+        log:`5140 A network share object was accessed\n  Share Name: \\\\TARGET\\ADMIN$\n  Account: user1\n  Source: 10.0.40.77\n4698 A scheduled task was created\n  Task Name: \\\\Remote\\upd\n  Author: user1\n  Action: C:\\Windows\\System32\\cmd.exe /c powershell -enc ...`,
+        choices:['Patch deployment','Lateral movement with remote task creation','Printer install','GPO refresh'], answer:1,
+        explain:'ADMIN$ access then remote scheduled task is a common lateral movement pattern.' },
+      { id:'q17', prompt:'Apache directory listing — what risk?',
+        log:`198.51.100.50 - - [04/Oct/2025:10:21:08 +0000] "GET /backup/ HTTP/1.1" 200 1024 "-" "Mozilla/5.0"\n198.51.100.50 - - [04/Oct/2025:10:21:12 +0000] "GET /backup/db.sql.gz HTTP/1.1" 200 52428800 "-" "Mozilla/5.0"`,
+        choices:['Backup verification','Exposed backup archives (data theft)','Robots crawl','CDN warm-up'], answer:1,
+        explain:'Public /backup with large archive downloads implies exposure and likely exfiltration.' },
+      { id:'q18', prompt:'Kubernetes API audit — what is this?',
+        log:`{"kind":"Event","verb":"create","userAgent":"kubectl/v1.29","user":"alice","sourceIPs":["198.51.100.25"],"objectRef":{"resource":"pods/exec","name":"api-7b9f5c","namespace":"prod"},"requestURI":"/api/v1/namespaces/prod/pods/api-7b9f5c/exec?command=/bin/sh","stage":"ResponseComplete","code":200}`,
+        choices:['Pod liveness probe','Interactive exec into pod (possible hands-on access)','CronJob run','Controller restart'], answer:1,
+        explain:'pods/exec with /bin/sh indicates an interactive shell opened into a container.' },
+      { id:'q19', prompt:'Palo Alto Threat log — choose the best description',
+        log:`2025/10/04 12:10:22,THREAT,alert,10.0.22.5,203.0.113.77,app=dns-over-https,threatid=Suspicious-DNS-Tunnel,severity=medium,action=alert,bytes_sent=154321,bytes_received=2048,sessionid=821773`,
+        choices:['Normal DNS','Detected DNS tunneling behavior','Benign DoH use','URL filtering block only'], answer:1,
+        explain:'App identification + threat signature flags DNS tunneling over DoH.' },
+      { id:'q20', prompt:'GCP VPC Flow Logs — what’s likely?',
+        log:`timestamp="2025-10-04T13:55:01Z" src=10.2.3.44 dst=203.0.113.200 src_port=44321 dst_port=443 protocol=6 action=ALLOW bytes_sent=987654321 bytes_received=2048 project=prod-vpc vm=report-srv`,
+        choices:['Small heartbeat','Large egress transfer (possible exfil)','Internal east-west','TLS handshake retry'], answer:1,
+        explain:'Sustained high egress to single external IP with tiny return = likely data push.' }
+    ];
+
+    const quiz = document.getElementById('quiz');
+    const barFill = document.getElementById('barFill');
+    const scoreEl = document.getElementById('score');
+    const totalEl = document.getElementById('total');
+    const done = document.getElementById('done');
+
+    let order = [];
+    let state = {}; // id -> {answered:boolean, correct:boolean}
+    let idx = 0; // current question index into order
+
+    function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } return arr; }
+
+    function reset(){
+      order = shuffle([...QUESTIONS.keys()]);
+      state = {};
+      idx = 0;
+      totalEl.textContent = QUESTIONS.length;
+      renderCurrent();
+      updateProgress();
+      done.classList.remove('show');
+    }
+
+    function renderCurrent(){
+      quiz.innerHTML = '';
+      const q = QUESTIONS[order[idx]];
+      const card = document.createElement('article');
+      card.className = 'q';
+      card.id = q.id;
+      card.innerHTML = `<h2>${q.prompt}</h2><pre class='log'>${q.log.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</pre>`;
+
+      const opts = document.createElement('div');
+      opts.className = 'opts';
+      q.choices.forEach((txt,i)=>{
+        const label = document.createElement('label');
+        label.className = 'opt';
+        const input = document.createElement('input');
+        input.type = 'radio'; input.name = q.id; input.value = i;
+        if(state[q.id]?.answered){ input.disabled = true; }
+        label.appendChild(input); label.append(txt);
+        label.addEventListener('click',()=> handleAnswer(q, card, label, i));
+        opts.appendChild(label);
+      });
+      card.appendChild(opts);
+
+      const expl = document.createElement('div');
+      expl.className = 'expl';
+      expl.textContent = q.explain;
+      if(state[q.id]?.answered) expl.classList.add('show');
+      card.appendChild(expl);
+
+      const nav = document.createElement('div');
+      nav.className = 'nav';
+      const left = document.createElement('div'); left.className='left';
+      const right = document.createElement('div'); right.className='right';
+      const backBtn = button('Back', ()=>{ if(idx>0){ idx--; renderCurrent(); }});
+      const nextBtn = button(idx < order.length-1 ? 'Next' : 'Finish', ()=>{
+        if(idx < order.length-1){ idx++; renderCurrent(); } else { if(allCorrect()) done.classList.add('show'); }
+      });
+      backBtn.disabled = idx===0;
+      left.append(backBtn);
+      right.append(nextBtn);
+      const index = document.createElement('div'); index.className='index'; index.textContent = `Question ${idx+1} of ${order.length}`;
+      nav.append(left, index, right);
+      card.appendChild(nav);
+
+      // Reflect state styles
+      if(state[q.id]?.answered){ card.classList.add(state[q.id].correct ? 'correct' : 'wrong'); }
+
+      quiz.appendChild(card);
+    }
+
+    function button(label, onClick){ const b=document.createElement('button'); b.className='btn'; b.textContent=label; b.addEventListener('click', onClick); return b; }
+
+    function handleAnswer(q, card, label, i){
+      if(state[q.id]?.answered) return;
+      const correct = i === q.answer;
+      const expl = card.querySelector('.expl');
+      if(correct){
+        card.classList.remove('wrong'); card.classList.add('correct');
+        label.classList.add('correct'); expl.classList.add('show');
+        state[q.id] = {answered:true, correct:true};
+        card.querySelectorAll('input').forEach(inp=> inp.disabled = true);
+      } else {
+        card.classList.add('wrong'); label.classList.add('wrong'); expl.classList.add('show');
+        label.querySelector('input').disabled = true; // prevent reselecting same wrong answer immediately
+        state[q.id] = {answered:false, correct:false};
+      }
+      updateProgress();
+    }
+
+    function updateProgress(){
+      const total = QUESTIONS.length;
+      const correct = Object.values(state).filter(s=>s.correct).length;
+      scoreEl.textContent = correct;
+      barFill.style.width = `${(correct/total)*100}%`;
+    }
+
+    function allCorrect(){ return Object.values(state).filter(s=>s.correct).length === QUESTIONS.length; }
+
+    document.getElementById('shuffleBtn').onclick = reset;
+    document.getElementById('resetBtn').onclick = ()=>{ order=[...QUESTIONS.keys()]; state={}; idx=0; renderCurrent(); updateProgress(); done.classList.remove('show'); };
+    document.getElementById('againBtn').onclick = reset;
+
+    reset();
+  </script>
+</body>
+</html>
