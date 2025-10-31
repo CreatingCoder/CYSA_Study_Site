@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CySA+ Vulnerability Standards Quiz</title>
+<style>
+  :root{
+    --bg:#0d1117;--card:#161b22;--ink:#e6edf3;
+    --muted:#9fb1c3;--border:#263042;
+    --ok:#2ea043;--bad:#ff6b6b;--chip:#121821;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
+  .wrap{max-width:900px;margin:0 auto;padding:20px}
+  header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap}
+  h1{font-size:18px;font-weight:700;margin:0}
+  .btn{background:#1b2230;border:1px solid var(--border);color:var(--ink);
+    padding:8px 12px;border-radius:10px;font-weight:600;cursor:pointer}
+  .grid{display:grid;gap:14px}
+  @media(min-width:720px){.grid{grid-template-columns:1fr 1fr}}
+  .col{background:var(--card);border:1px solid var(--border);
+    border-radius:12px;padding:12px}
+  .col h2{font-size:14px;color:var(--muted);margin:0 0 10px}
+  .list,.targets{display:grid;gap:10px}
+  .item{
+    border:1px solid var(--border);border-radius:10px;background:var(--chip);
+    padding:10px 12px;font-weight:700;user-select:none;touch-action:none;cursor:grab;
+  }
+  .item.sel{outline:2px dashed #58a6ff}
+  .target{
+    background:var(--chip);border:1px solid var(--border);
+    border-radius:10px;padding:10px 12px;transition:outline .25s ease, box-shadow .25s ease;
+  }
+  .desc{font-size:14px}
+  .is-correct{outline:2px solid var(--ok);box-shadow:0 0 6px rgba(46,160,67,.4)}
+  .flash-wrong{animation:wrong .45s ease}
+  @keyframes wrong{
+    0%{outline:2px solid transparent}
+    25%,75%{outline:2px solid var(--bad);box-shadow:0 0 6px rgba(255,107,107,.4)}
+    100%{outline:2px solid transparent}
+  }
+  .overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,.7);
+    display:flex;align-items:center;justify-content:center;z-index:10;
+  }
+  .popup{
+    background:#161b22;padding:30px 40px;border-radius:16px;
+    text-align:center;box-shadow:0 0 20px rgba(46,160,67,.4);
+  }
+  .popup h2{color:var(--ok);margin:0 0 10px}
+  .popup button{background:var(--ok);color:white;border:none;
+    padding:10px 20px;border-radius:10px;font-weight:700;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Match Each Vulnerability Standard to Its Description (CySA+ Domain 2)</h1>
+    <button class="btn" id="resetBtn">Reset</button>
+  </header>
+
+  <section class="grid">
+    <div class="col">
+      <h2>Standards & Frameworks</h2>
+      <div class="list" id="list"></div>
+    </div>
+    <div class="col">
+      <h2>Descriptions</h2>
+      <div class="targets" id="targets"></div>
+    </div>
+  </section>
+</div>
+
+<script>
+const PAIRS = [
+  {id:"cvss", term:"CVSS (Common Vulnerability Scoring System)",
+    desc:"Rates the severity of a vulnerability using numerical scores (0–10)."},
+  {id:"cve", term:"CVE (Common Vulnerabilities and Exposures)",
+    desc:"Provides unique identifiers for publicly known vulnerabilities."},
+  {id:"cpe", term:"CPE (Common Platform Enumeration)",
+    desc:"Standard naming format for operating systems, applications, and hardware to show what’s affected."},
+  {id:"cwe", term:"CWE (Common Weakness Enumeration)",
+    desc:"List of common software weaknesses (e.g., buffer overflow, injection). Helps classify flaw types."},
+  {id:"capec", term:"CAPEC (Common Attack Pattern Enumeration and Classification)",
+    desc:"Describes typical attack patterns used by adversaries to exploit weaknesses."},
+  {id:"scap", term:"SCAP (Security Content Automation Protocol)",
+    desc:"NIST framework that integrates CVE, CPE, and CVSS to automate vulnerability and compliance management."},
+  {id:"nvd", term:"NVD (National Vulnerability Database)",
+    desc:"NIST’s official database of CVEs including CVSS scores, CPE data, and mitigation information."},
+];
+
+const list = document.getElementById("list");
+const targets = document.getElementById("targets");
+const resetBtn = document.getElementById("resetBtn");
+let placed = new Map(); let selectedChip=null;
+
+function shuffle(a){const b=a.slice();for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b;}
+
+function init(){
+  placed.clear(); selectedChip=null;
+  list.innerHTML=""; targets.innerHTML="";
+  for(const p of shuffle(PAIRS)){
+    const chip=document.createElement("div");
+    chip.className="item"; chip.dataset.id=p.id; chip.textContent=p.term;
+    chip.addEventListener("click",()=>{
+      if(chip.classList.contains("ghost"))return;
+      const on=chip.classList.contains("sel");
+      document.querySelectorAll(".item").forEach(c=>c.classList.remove("sel"));
+      if(!on){chip.classList.add("sel");selectedChip=chip;}else{selectedChip=null;}
+    });
+    enablePointerDrag(chip);
+    list.appendChild(chip);
+  }
+  for(const p of shuffle(PAIRS)){
+    const box=document.createElement("div");
+    box.className="target"; box.dataset.id=p.id;
+    box.innerHTML=`<div class="desc">${p.desc}</div>`;
+    box.addEventListener("click",()=>{
+      if(!selectedChip)return;
+      check(selectedChip.dataset.id, box, selectedChip);
+      selectedChip=null; document.querySelectorAll(".item").forEach(c=>c.classList.remove("sel"));
+    });
+    targets.appendChild(box);
+  }
+}
+
+function check(id, box, chip){
+  if(placed.has(box.dataset.id))return;
+  if(id===box.dataset.id){
+    placed.set(id,true);
+    box.classList.add("is-correct");
+    chip.style.opacity=".4"; chip.style.pointerEvents="none"; chip.classList.add("ghost");
+    if(placed.size===PAIRS.length)congrats();
+  }else{
+    box.classList.add("flash-wrong");
+    setTimeout(()=>box.classList.remove("flash-wrong"),500);
+  }
+}
+
+function congrats(){
+  const overlay=document.createElement("div"); overlay.className="overlay";
+  overlay.innerHTML=`<div class="popup"><h2>🎉 Excellent!</h2>
+  <p>You matched all vulnerability management standards used in CySA+.</p>
+  <button>Play Again</button></div>`;
+  document.body.appendChild(overlay);
+  overlay.querySelector("button").addEventListener("click",()=>{overlay.remove();init();});
+}
+
+/* Mobile-friendly pointer drag */
+function enablePointerDrag(chip){
+  let dragging=false,clone=null,offX=0,offY=0;
+  chip.addEventListener("pointerdown",e=>{
+    if(chip.classList.contains("ghost"))return;
+    dragging=true; chip.setPointerCapture(e.pointerId);
+    const r=chip.getBoundingClientRect();
+    offX=e.clientX-r.left; offY=e.clientY-r.top;
+    clone=chip.cloneNode(true);
+    Object.assign(clone.style,{
+      position:"fixed",left:(e.clientX-offX)+"px",top:(e.clientY-offY)+"px",
+      width:r.width+"px",zIndex:9999,opacity:.95,pointerEvents:"none"
+    });
+    document.body.appendChild(clone);
+  });
+  window.addEventListener("pointermove",e=>{
+    if(!dragging||!clone)return;
+    clone.style.left=(e.clientX-offX)+"px";
+    clone.style.top=(e.clientY-offY)+"px";
+  },{passive:true});
+  window.addEventListener("pointerup",e=>{
+    if(!dragging)return; dragging=false;
+    if(clone){
+      const el=document.elementFromPoint(e.clientX,e.clientY);
+      const target=el?el.closest(".target"):null;
+      if(target)check(chip.dataset.id,target,chip);
+      clone.remove(); clone=null;
+    }
+    try{chip.releasePointerCapture(e.pointerId);}catch{}
+  },{passive:true});
+}
+
+resetBtn.onclick=init;
+init();
+</script>
+</body>
+</html>
