@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>grep Essentials — CySA+ Quiz</title>
+<title>grep Essentials — CySA+ Quiz (Mobile Friendly)</title>
 <style>
   :root{
     --bg:#0d1117; --card:#161b22; --ink:#e6edf3;
     --muted:#9fb1c3; --border:#263042;
-    --ok-glow:#2ea043; --bad-glow:#ff6b6b; --chip:#121821;
+    --ok:#2ea043; --bad:#ff6b6b; --chip:#121821;
   }
   *{box-sizing:border-box}
   html,body{margin:0;background:var(--bg);color:var(--ink);
@@ -27,21 +27,25 @@
     border-radius:12px;padding:12px}
   .col h2{font-size:14px;color:var(--muted);margin:0 0 10px}
   .list,.targets{display:grid;gap:10px}
+
+  /* Draggable chips (pointer events + tap select) */
   .item{
     border:1px solid var(--border);border-radius:10px;background:var(--chip);
-    padding:10px 12px;font-weight:700;cursor:grab;user-select:none
+    padding:10px 12px;font-weight:700;user-select:none;touch-action:none;cursor:grab;
   }
+  .item:active{cursor:grabbing}
+  .item.sel{outline:2px dashed #58a6ff}
+
   .target{
     background:var(--chip);border:1px solid var(--border);
-    border-radius:10px;padding:10px 12px;
-    transition:outline .25s ease, box-shadow .25s ease;
+    border-radius:10px;padding:10px 12px;transition:outline .25s ease, box-shadow .25s ease;
   }
   .desc{font-size:14px}
-  .is-correct{outline:2px solid var(--ok-glow);box-shadow:0 0 6px rgba(46,160,67,.4)}
+  .is-correct{outline:2px solid var(--ok);box-shadow:0 0 6px rgba(46,160,67,.4)}
   .flash-wrong{animation:wrong .45s ease}
   @keyframes wrong{
     0%{outline:2px solid transparent}
-    25%,75%{outline:2px solid var(--bad-glow);box-shadow:0 0 6px rgba(255,107,107,.4)}
+    25%,75%{outline:2px solid var(--bad);box-shadow:0 0 6px rgba(255,107,107,.4)}
     100%{outline:2px solid transparent}
   }
   .overlay{
@@ -52,8 +56,8 @@
     background:#161b22;padding:30px 40px;border-radius:16px;
     text-align:center;box-shadow:0 0 20px rgba(46,160,67,.4);
   }
-  .popup h2{color:#2ea043;margin:0 0 10px}
-  .popup button{background:#2ea043;color:white;border:none;
+  .popup h2{color:var(--ok);margin:0 0 10px}
+  .popup button{background:var(--ok);color:white;border:none;
     padding:10px 20px;border-radius:10px;font-weight:700;cursor:pointer}
 </style>
 </head>
@@ -93,42 +97,62 @@ const targets = document.getElementById("targets");
 const resetBtn = document.getElementById("resetBtn");
 
 let placed = new Map();
+let selectedChip = null;
 
-function shuffle(a){return a.sort(()=>Math.random()-0.5)}
+function shuffle(a){const b=a.slice();for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b;}
 
 function init(){
-  placed.clear();
+  placed.clear(); selectedChip=null;
   list.innerHTML=""; targets.innerHTML="";
+
+  // Build chips (NO HTML5 drag; use pointer + tap)
   for(const p of shuffle(PAIRS)){
-    const item=document.createElement("div");
-    item.className="item"; item.textContent=p.term;
-    item.draggable=true; item.dataset.id=p.id;
-    item.addEventListener("dragstart",e=>e.dataTransfer.setData("text/plain",p.id));
-    list.appendChild(item);
-  }
-  for(const p of shuffle(PAIRS)){
-    const box=document.createElement("div");
-    box.className="target"; box.dataset.id=p.id;
-    box.innerHTML=`<div class="desc">${p.desc}</div>`;
-    box.addEventListener("dragover",e=>e.preventDefault());
-    box.addEventListener("drop",e=>{
-      e.preventDefault();
-      const dragId=e.dataTransfer.getData("text/plain");
-      check(dragId, box);
+    const chip = document.createElement("div");
+    chip.className = "item";
+    chip.dataset.id = p.id;
+    chip.textContent = p.term;
+
+    // Tap-to-select
+    chip.addEventListener("click", ()=>{
+      if (chip.classList.contains("ghost")) return;
+      const on = chip.classList.contains("sel");
+      document.querySelectorAll(".item").forEach(c=>c.classList.remove("sel"));
+      if (!on){ chip.classList.add("sel"); selectedChip = chip; } else { selectedChip = null; }
     });
+
+    enablePointerDrag(chip);
+    list.appendChild(chip);
+  }
+
+  // Build targets
+  for(const p of shuffle(PAIRS)){
+    const box = document.createElement("div");
+    box.className = "target";
+    box.dataset.id = p.id;
+    box.innerHTML = `<div class="desc">${p.desc}</div>`;
+
+    // Tap target to place selected chip
+    box.addEventListener("click", ()=>{
+      if(!selectedChip) return;
+      check(selectedChip.dataset.id, box, selectedChip);
+      selectedChip = null;
+      document.querySelectorAll(".item").forEach(c=>c.classList.remove("sel"));
+    });
+
     targets.appendChild(box);
   }
 }
 
-function check(id, box){
-  if(placed.has(box.dataset.id))return;
-  const correct=box.dataset.id===id;
-  const chip=document.querySelector(`.item[data-id='${id}']`);
+function check(id, box, chip){
+  if(placed.has(box.dataset.id)) return;
+  const correct = (box.dataset.id === id);
   if(correct){
-    box.classList.add("is-correct");
-    chip.style.opacity=".4"; chip.draggable=false;
     placed.set(id,true);
-    if(placed.size===PAIRS.length)congrats();
+    box.classList.add("is-correct");
+    chip.style.opacity=".4";
+    chip.style.pointerEvents="none";
+    chip.classList.add("ghost");
+    if(placed.size===PAIRS.length) congrats();
   }else{
     box.classList.add("flash-wrong");
     setTimeout(()=>box.classList.remove("flash-wrong"),500);
@@ -136,15 +160,69 @@ function check(id, box){
 }
 
 function congrats(){
-  const overlay=document.createElement("div");
-  overlay.className="overlay";
-  overlay.innerHTML=`<div class="popup"><h2>🎉 Great job!</h2>
-    <p>You matched all essential <code>grep</code> options!</p>
-    <button onclick="overlay.remove();init()">Play Again</button></div>`;
+  const overlay = document.createElement("div");
+  overlay.className = "overlay";
+  overlay.innerHTML = `
+    <div class="popup">
+      <h2>🎉 Great job!</h2>
+      <p>You matched all essential <code>grep</code> options!</p>
+      <button class="replay">Play Again</button>
+    </div>`;
   document.body.appendChild(overlay);
+
+  overlay.querySelector(".replay").addEventListener("click", ()=>{
+    overlay.remove();
+    init();
+  });
 }
 
-resetBtn.onclick=init;
+/* ===== Mobile-friendly pointer drag (iOS/Android/Desktop) ===== */
+function enablePointerDrag(chip){
+  let dragging=false, clone=null, offX=0, offY=0;
+
+  chip.addEventListener("pointerdown", (e)=>{
+    if (chip.classList.contains("ghost")) return;
+    dragging = true;
+    chip.setPointerCapture(e.pointerId);
+
+    const r = chip.getBoundingClientRect();
+    offX = e.clientX - r.left;
+    offY = e.clientY - r.top;
+
+    clone = chip.cloneNode(true);
+    Object.assign(clone.style, {
+      position:"fixed",
+      left:(e.clientX - offX) + "px",
+      top:(e.clientY - offY) + "px",
+      width:r.width + "px",
+      zIndex:9999,
+      opacity:.95,
+      pointerEvents:"none"
+    });
+    document.body.appendChild(clone);
+  });
+
+  window.addEventListener("pointermove", (e)=>{
+    if(!dragging || !clone) return;
+    clone.style.left = (e.clientX - offX) + "px";
+    clone.style.top  = (e.clientY - offY) + "px";
+  }, {passive:true});
+
+  window.addEventListener("pointerup", (e)=>{
+    if(!dragging) return; dragging=false;
+    if (clone){
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      const target = el ? el.closest(".target") : null;
+      if (target){
+        check(chip.dataset.id, target, chip);
+      }
+      clone.remove(); clone = null;
+    }
+    try{ chip.releasePointerCapture(e.pointerId); }catch{}
+  }, {passive:true});
+}
+
+resetBtn.addEventListener("click", init);
 init();
 </script>
 </body>
