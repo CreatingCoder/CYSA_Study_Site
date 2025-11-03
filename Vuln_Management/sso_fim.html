@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SSO vs Federated Identity — Matching Game</title>
+<style>
+  :root{
+    --bg:#0d1117; --card:#111827; --ink:#e6edf3; --muted:#9fb1c3;
+    --accent:#67e8f9; --good:#22c55e; --bad:#ef4444; --border:#1f2937;
+    --chip:#0b1220; --shadow:0 10px 30px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
+  .wrap{max-width:1100px;margin:0 auto;padding:20px}
+  header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:18px}
+  h1{font-size:clamp(20px,2.6vw,30px);margin:0;letter-spacing:.2px}
+  .sub{color:var(--muted);font-size:.95rem}
+  .panel{background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow)}
+  .controls{display:flex;gap:10px;flex-wrap:wrap}
+  button{
+    background:linear-gradient(180deg,#0f172a,#0b1220);
+    border:1px solid var(--border);color:var(--ink);
+    padding:10px 14px;border-radius:12px;cursor:pointer;font-weight:600
+  }
+  button:hover{outline:1px solid #23314a}
+  .stats{display:flex;gap:14px;align-items:center;color:var(--muted)}
+  .stats b{color:var(--ink)}
+  .board{display:grid;grid-template-columns:1fr;gap:14px}
+  @media(min-width:820px){.board{grid-template-columns:1fr 1fr}}
+  .pool{padding:14px}
+  .pool h2,.bucket h2{margin:0 0 10px 0;font-size:1rem;color:var(--muted);font-weight:600}
+  .chips{display:flex;flex-wrap:wrap;gap:10px;min-height:52px}
+  .chip{
+    user-select:none;
+    background:var(--chip);border:1px solid var(--border);border-radius:999px;
+    padding:10px 14px;font-weight:600;display:inline-flex;gap:8px;align-items:center;
+    box-shadow:var(--shadow);touch-action:none
+  }
+  .chip[draggable="true"]{cursor:grab}
+  .chip:active{cursor:grabbing}
+  .chip .info{font-size:.85rem;color:var(--muted)}
+  .chip.correct{background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.45)}
+  .chip.wrong{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.45)}
+  .bucket{padding:14px;min-height:220px;display:flex;flex-direction:column;gap:10px}
+  .dropzone{
+    flex:1;border:2px dashed #2b3546;border-radius:16px;padding:10px;
+    display:flex;flex-wrap:wrap;gap:10px;align-content:flex-start
+  }
+  .dropzone.active{border-color:var(--accent);box-shadow:0 0 0 4px rgba(103,232,249,.15) inset}
+  .label{display:flex;align-items:center;gap:8px;font-weight:800;text-transform:uppercase;letter-spacing:.5px}
+  .label .dot{width:10px;height:10px;border-radius:50%}
+  .label.sso .dot{background:#60a5fa}
+  .label.fim .dot{background:#a78bfa}
+  .legend{display:flex;gap:12px;color:var(--muted);font-size:.9rem}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .pulse-good{animation:pulseG .8s}
+  .pulse-bad{animation:pulseB .8s}
+  @keyframes pulseG{0%{box-shadow:0 0 0 0 rgba(34,197,94,.6)}100%{box-shadow:0 0 0 14px rgba(34,197,94,0)}}
+  @keyframes pulseB{0%{box-shadow:0 0 0 0 rgba(239,68,68,.6)}100%{box-shadow:0 0 0 14px rgba(239,68,68,0)}}
+  .footer{margin-top:14px;color:var(--muted);font-size:.9rem}
+  .toast{
+    position:fixed;left:50%;transform:translateX(-50%);
+    bottom:18px;background:#0b1220;border:1px solid var(--border);
+    color:var(--ink);padding:10px 14px;border-radius:12px;box-shadow:var(--shadow);opacity:0;pointer-events:none
+  }
+  .toast.show{opacity:1;transition:opacity .2s}
+  .hint{
+    display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);
+    align-items:center;justify-content:center;padding:18px;z-index:50
+  }
+  .hint .card{background:var(--card);border:1px solid var(--border);border-radius:16px;max-width:520px;width:100%;padding:16px}
+  .hint h3{margin:0 0 6px 0}
+  .hint p{margin:0;color:var(--muted)}
+  .hint .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(1px,1px,1px,1px)}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Match the Tech: <span class="sub">SSO vs Federated Identity (FIM)</span></h1>
+        <div class="legend">
+          <span><strong>Goal:</strong> Drag each chip into the correct bucket.</span>
+          <span>✅ stays if correct</span>
+          <span>❌ returns if wrong</span>
+        </div>
+      </div>
+      <div class="controls">
+        <button id="showAnswers" aria-label="Show answers">Show answers</button>
+        <button id="resetGame" aria-label="Reset game">Reset</button>
+      </div>
+    </header>
+
+    <section class="panel pool">
+      <h2>Tech Pool (drag or tap an item for a quick explanation)</h2>
+      <div id="pool" class="chips" aria-live="polite"></div>
+    </section>
+
+    <section class="board">
+      <div class="panel bucket" aria-labelledby="label-sso">
+        <div class="label sso" id="label-sso"><span class="dot"></span> SSO (same identity engine)</div>
+        <div id="drop-sso" class="dropzone" data-accept="SSO" role="list" aria-describedby="desc-sso"></div>
+        <div id="desc-sso" class="sr">Drop items here that are Single Sign-On within one domain/tenant.</div>
+      </div>
+
+      <div class="panel bucket" aria-labelledby="label-fim">
+        <div class="label fim" id="label-fim"><span class="dot"></span> Federated Identity (cross-domain trust)</div>
+        <div id="drop-fim" class="dropzone" data-accept="FIM" role="list" aria-describedby="desc-fim"></div>
+        <div id="desc-fim" class="sr">Drop items here that are federation between different identity providers.</div>
+      </div>
+    </section>
+
+    <div class="footer">
+      <div class="stats">
+        <span>Score: <b id="score">0</b>/<b id="total">0</b></span>
+        <span>•</span>
+        <span id="remaining">Remaining: 0</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <!-- Quick explanation modal -->
+  <div class="hint" id="hint" role="dialog" aria-modal="true" aria-labelledby="hintTitle">
+    <div class="card">
+      <h3 id="hintTitle">What is this?</h3>
+      <p id="hintBody"></p>
+      <div class="actions">
+        <button id="hintClose">Close</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  // Game data — keep items unambiguous
+  const items = [
+    // SSO
+    { text:"Kerberos (AD domain)", group:"SSO",
+      hint:"Ticket-based SSO within a Windows/AD domain (same trust boundary)." },
+    { text:"NTLM (intra-domain)", group:"SSO",
+      hint:"Legacy Windows auth; SSO inside the same domain context." },
+    { text:"CAS (Central Authentication Service)", group:"SSO",
+      hint:"Campus/enterprise SSO pattern using a single auth server for many internal apps." },
+    { text:"Google Workspace native SSO", group:"SSO",
+      hint:"One Google identity to access Gmail/Drive/etc within the same Google tenant." },
+    { text:"Azure AD same-tenant SSO", group:"SSO",
+      hint:"Single sign-on to apps that use the same Azure AD tenant as authority." },
+    { text:"IBM Tivoli/ISAM SSO", group:"SSO",
+      hint:"Enterprise web access manager providing intra-org SSO." },
+
+    // Federation
+    { text:"SAML 2.0", group:"FIM",
+      hint:"Federation protocol: IdP asserts identity to an SP across domains." },
+    { text:"OAuth 2.0", group:"FIM",
+      hint:"Authorization framework widely used in federated web sign-ins/consent flows." },
+    { text:"OpenID Connect (OIDC)", group:"FIM",
+      hint:"Identity layer on OAuth2; standard modern federation for login." },
+    { text:"WS-Federation", group:"FIM",
+      hint:"Microsoft-oriented federation protocol (older, still seen in some orgs)." },
+    { text:"Shibboleth (SAML implementation)", group:"FIM",
+      hint:"Open-source SAML federation stack common in higher ed." },
+    { text:"ADFS (Active Directory Federation Services)", group:"FIM",
+      hint:"A federation server that issues/validates claims between orgs/realms." }
+  ];
+
+  // State
+  let shuffled = [];
+  const poolEl = document.getElementById('pool');
+  const dropSSO = document.getElementById('drop-sso');
+  const dropFIM = document.getElementById('drop-fim');
+  const scoreEl = document.getElementById('score');
+  const totalEl = document.getElementById('total');
+  const remainingEl = document.getElementById('remaining');
+  const toastEl = document.getElementById('toast');
+  const hint = document.getElementById('hint');
+  const hintBody = document.getElementById('hintBody');
+  const hintTitle = document.getElementById('hintTitle');
+  const hintClose = document.getElementById('hintClose');
+
+  function randShuffle(arr){
+    // Fisher–Yates
+    const a = arr.slice();
+    for(let i=a.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [a[i],a[j]]=[a[j],a[i]];
+    }
+    return a;
+  }
+
+  function buildChip(item, idx){
+    const chip = document.createElement('button');
+    chip.className = 'chip';
+    chip.type = 'button';
+    chip.textContent = item.text;
+    chip.setAttribute('draggable','true');
+    chip.setAttribute('data-group', item.group);
+    chip.setAttribute('data-index', idx);
+    chip.title = 'Tap for a quick explanation';
+    // Quick explanation on click (mobile friendly)
+    chip.addEventListener('click', () => {
+      hintTitle.textContent = item.text;
+      hintBody.textContent = item.hint;
+      hint.style.display = 'flex';
+      hint.querySelector('button#hintClose').focus();
+    });
+    // Drag handlers
+    chip.addEventListener('dragstart', onDragStart);
+    chip.addEventListener('touchstart', onTouchDragStart, {passive:false});
+    return chip;
+  }
+
+  // Accessibility helper for announcement
+  let toastTimer=null;
+  function toast(msg){
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=>toastEl.classList.remove('show'), 1200);
+  }
+
+  function setStats(){
+    const total = items.length;
+    const placed = document.querySelectorAll('.dropzone .chip').length;
+    scoreEl.textContent = placed;
+    totalEl.textContent = total;
+    remainingEl.textContent = `Remaining: ${total - placed}`;
+    if(placed === total){
+      toast('🎉 Perfect! All matched.');
+      pulse(dropSSO, 'pulse-good');
+      pulse(dropFIM, 'pulse-good');
+    }
+  }
+
+  function pulse(el, cls){
+    el.classList.remove(cls);
+    // force reflow
+    void el.offsetWidth;
+    el.classList.add(cls);
+    setTimeout(()=>el.classList.remove(cls), 900);
+  }
+
+  function reset(){
+    poolEl.innerHTML = '';
+    dropSSO.innerHTML = '';
+    dropFIM.innerHTML = '';
+    shuffled = randShuffle(items);
+    shuffled.forEach((it, i)=> poolEl.appendChild(buildChip(it, i)));
+    setStats();
+  }
+
+  // Drag & Drop
+  let dragData = null;
+  function onDragStart(e){
+    const chip = e.target.closest('.chip');
+    dragData = { text: chip.textContent, group: chip.dataset.group, index: chip.dataset.index, node: chip };
+    e.dataTransfer?.setData('text/plain', JSON.stringify(dragData));
+    e.dataTransfer?.setDragImage(chip, chip.offsetWidth/2, chip.offsetHeight/2);
+  }
+
+  function onTouchDragStart(e){
+    // Light-weight long-press/drag for mobile: on touchstart, we temporarily make dropzones active and on touchend figure target by elementFromPoint
+    if(e.touches.length !== 1) return;
+    e.preventDefault();
+    const chip = e.target.closest('.chip');
+    dragData = { text: chip.textContent, group: chip.dataset.group, index: chip.dataset.index, node: chip };
+    activateZones(true);
+
+    const move = (evt)=>{
+      const t = evt.touches[0];
+      const el = document.elementFromPoint(t.clientX, t.clientY);
+      highlightZone(el);
+    };
+    const end = (evt)=>{
+      const t = evt.changedTouches[0];
+      const el = document.elementFromPoint(t.clientX, t.clientY);
+      dropOn(el);
+      cleanup();
+    };
+    const cancel = ()=>{ cleanup(); };
+
+    function cleanup(){
+      activateZones(false);
+      document.removeEventListener('touchmove', move);
+      document.removeEventListener('touchend', end);
+      document.removeEventListener('touchcancel', cancel);
+    }
+
+    document.addEventListener('touchmove', move, {passive:false});
+    document.addEventListener('touchend', end);
+    document.addEventListener('touchcancel', cancel);
+  }
+
+  function activateZones(on){
+    [dropSSO, dropFIM].forEach(z=> z.classList.toggle('active', on));
+  }
+  function highlightZone(el){
+    [dropSSO, dropFIM].forEach(z=> z.classList.remove('active'));
+    const dz = el?.closest?.('.dropzone');
+    if(dz) dz.classList.add('active');
+  }
+
+  function handleDragOver(ev){
+    ev.preventDefault();
+    ev.currentTarget.classList.add('active');
+  }
+  function handleDragLeave(ev){
+    ev.currentTarget.classList.remove('active');
+  }
+
+  function handleDrop(ev){
+    ev.preventDefault();
+    ev.currentTarget.classList.remove('active');
+    let data = dragData;
+    if(!data && ev.dataTransfer){
+      try{ data = JSON.parse(ev.dataTransfer.getData('text/plain')); }catch{}
+    }
+    if(!data) return;
+    dropInto(ev.currentTarget, data);
+  }
+
+  function dropOn(el){
+    const dz = el?.closest?.('.dropzone');
+    if(!dz || !dragData) { // wrong place: bounce
+      pulse(poolEl, 'pulse-bad');
+      return;
+    }
+    dropInto(dz, dragData);
+  }
+
+  function dropInto(zone, data){
+    const expect = zone.dataset.accept;
+    const chip = data.node;
+    if(data.group === expect){
+      // correct
+      chip.classList.remove('wrong');
+      chip.classList.add('correct');
+      zone.appendChild(chip);
+      chip.setAttribute('draggable','false');
+      chip.onclick = () => { // keep explanation available
+        hintTitle.textContent = data.text;
+        const base = items.find(i => i.text === data.text);
+        hintBody.textContent = base?.hint || '';
+        hint.style.display='flex';
+        hintClose.focus();
+      };
+      toast('✅ Correct');
+      pulse(zone, 'pulse-good');
+    } else {
+      // wrong: flash & return to pool
+      chip.classList.add('wrong');
+      toast('❌ Try again');
+      pulse(zone, 'pulse-bad');
+      setTimeout(()=>{
+        chip.classList.remove('wrong');
+        poolEl.appendChild(chip);
+      }, 300);
+    }
+    setStats();
+  }
+
+  // Buttons
+  document.getElementById('resetGame').addEventListener('click', reset);
+
+  document.getElementById('showAnswers').addEventListener('click', ()=>{
+    // Move everything to correct zones
+    const allChips = [...document.querySelectorAll('.chip')];
+    allChips.forEach(ch=>{
+      const grp = ch.dataset.group;
+      const target = grp === 'SSO' ? dropSSO : dropFIM;
+      ch.classList.add('correct');
+      ch.classList.remove('wrong');
+      ch.setAttribute('draggable','false');
+      target.appendChild(ch);
+    });
+    setStats();
+    toast('📘 Answers revealed');
+    pulse(dropSSO,'pulse-good'); pulse(dropFIM,'pulse-good');
+  });
+
+  // Dropzone events
+  [dropSSO, dropFIM].forEach(z=>{
+    z.addEventListener('dragover', handleDragOver);
+    z.addEventListener('dragleave', handleDragLeave);
+    z.addEventListener('drop', handleDrop);
+  });
+
+  // Hint modal
+  hintClose.addEventListener('click', ()=> hint.style.display='none');
+  hint.addEventListener('click', (e)=>{ if(e.target === hint) hint.style.display='none'; });
+
+  // Boot
+  reset();
+})();
+</script>
+</body>
+</html>
