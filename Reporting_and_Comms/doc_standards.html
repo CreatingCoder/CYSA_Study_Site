@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CySA+ — Standards & Frameworks Quiz (Option 1)</title>
+<style>
+  :root{
+    --bg:#0d1117; --card:#161b22; --ink:#e6edf3;
+    --muted:#9fb1c3; --border:#263042; --ok:#2ea043; --bad:#ff6b6b; --chip:#121821;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
+  .wrap{max-width:950px;margin:0 auto;padding:18px}
+  header{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:14px}
+  h1{font-size:18px;margin:0;font-weight:700}
+  .btn{background:#1b2230;border:1px solid var(--border);color:var(--ink);padding:8px 12px;border-radius:10px;font-weight:600;cursor:pointer}
+  .grid{display:grid;gap:14px}
+  @media(min-width:720px){.grid{grid-template-columns:1fr 1fr}}
+  .col{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px}
+  .col h2{font-size:14px;color:var(--muted);margin:0 0 10px}
+  .list,.targets{display:grid;gap:10px}
+  .item{
+    border:1px solid var(--border);border-radius:10px;background:var(--chip);
+    padding:10px 12px;font-weight:700;user-select:none;touch-action:none;cursor:grab;
+    display:flex;justify-content:space-between;align-items:center
+  }
+  .item.sel{outline:2px dashed #58a6ff}
+  .abbr{font-size:12px;color:#9cc1ff;background:#0f1722;border:1px solid #23324a;border-radius:999px;padding:2px 8px}
+  .target{
+    background:var(--chip);border:1px solid var(--border);border-radius:10px;padding:10px 12px;
+    transition:outline .25s ease, box-shadow .25s ease;
+  }
+  .desc{font-size:14px;line-height:1.35}
+  .is-correct{outline:2px solid var(--ok);box-shadow:0 0 6px rgba(46,160,67,.4)}
+  .flash-wrong{animation:wrong .45s ease}
+  @keyframes wrong{
+    0%{outline:2px solid transparent}
+    25%,75%{outline:2px solid var(--bad);box-shadow:0 0 6px rgba(255,107,107,.4)}
+    100%{outline:2px solid transparent}
+  }
+  .overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:10
+  }
+  .popup{
+    background:#161b22;padding:28px 32px;border-radius:14px;text-align:center;box-shadow:0 0 20px rgba(46,160,67,.35)
+  }
+  .popup h2{color:var(--ok);margin:0 0 8px;font-size:24px}
+  .popup button{background:var(--ok);color:#fff;border:none;padding:10px 16px;border-radius:10px;font-weight:700;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Match Standards/Frameworks to Their CySA+ Descriptions</h1>
+    <button class="btn" id="resetBtn">Reset</button>
+  </header>
+
+  <section class="grid">
+    <div class="col">
+      <h2>Standards & Frameworks</h2>
+      <div class="list" id="list"></div>
+    </div>
+    <div class="col">
+      <h2>Descriptions</h2>
+      <div class="targets" id="targets"></div>
+    </div>
+  </section>
+</div>
+
+<script>
+/* ===== CySA+ Option 1 set ===== */
+const PAIRS = [
+  { id:"80053", term:"NIST SP 800-53", abbr:"controls",
+    desc:"Catalog of security & privacy controls for information systems (control families, baselines)." },
+  { id:"80037", term:"NIST SP 800-37", abbr:"RMF guide",
+    desc:"Guide to applying the Risk Management Framework for system authorization." },
+  { id:"ISO27001", term:"ISO/IEC 27001", abbr:"ISMS",
+    desc:"Requirements standard for building & certifying an ISMS (management system)." },
+  { id:"ISO27002", term:"ISO/IEC 27002", abbr:"controls guide",
+    desc:"Code of practice providing implementation guidance for security controls." },
+  { id:"RMF", term:"NIST RMF (process)", abbr:"lifecycle",
+    desc:"Process to manage risk: Categorize → Select → Implement → Assess → Authorize → Monitor." },
+  { id:"ATTACK", term:"MITRE ATT&CK", abbr:"TTPs",
+    desc:"Knowledge base of adversary TTPs mapped to techniques & tactics used across the attack lifecycle." },
+  { id:"KILLCHAIN", term:"Cyber Kill Chain", abbr:"stages",
+    desc:"Model describing intrusion stages from Reconnaissance through Actions on Objectives." },
+  { id:"DIAMOND", term:"Diamond Model", abbr:"analysis",
+    desc:"Intrusion analysis model relating Adversary, Capability, Infrastructure, and Victim." },
+  { id:"CIS", term:"CIS Critical Security Controls", abbr:"safeguards",
+    desc:"Prioritized, prescriptive safeguards (v8) for enterprise defense and hygiene." },
+];
+
+const listEl = document.getElementById('list');
+const targetsEl = document.getElementById('targets');
+const resetBtn = document.getElementById('resetBtn');
+
+let placed = new Map();
+let selectedChip = null;
+
+function shuffle(a){const b=a.slice();for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b;}
+
+function init(){
+  placed.clear(); selectedChip=null;
+  listEl.innerHTML=''; targetsEl.innerHTML='';
+  // Left chips
+  for(const p of shuffle(PAIRS)){
+    const chip = document.createElement('div');
+    chip.className = 'item';
+    chip.dataset.id = p.id;
+    chip.innerHTML = `<span>${p.term}</span><span class="abbr">${p.abbr}</span>`;
+
+    // Tap select
+    chip.addEventListener('click', ()=>{
+      if(chip.classList.contains('ghost')) return;
+      const on = chip.classList.contains('sel');
+      document.querySelectorAll('.item').forEach(c=>c.classList.remove('sel'));
+      if(!on){ chip.classList.add('sel'); selectedChip = chip; } else { selectedChip = null; }
+    });
+
+    enablePointerDrag(chip);
+    listEl.appendChild(chip);
+  }
+  // Right targets
+  for(const p of shuffle(PAIRS)){
+    const box = document.createElement('div');
+    box.className = 'target';
+    box.dataset.id = p.id;
+    box.innerHTML = `<div class="desc">${p.desc}</div>`;
+    // Tap to place
+    box.addEventListener('click', ()=>{
+      if(!selectedChip) return;
+      check(selectedChip.dataset.id, box, selectedChip);
+      selectedChip = null;
+      document.querySelectorAll('.item').forEach(c=>c.classList.remove('sel'));
+    });
+    targetsEl.appendChild(box);
+  }
+}
+
+function check(id, box, chip){
+  if(placed.has(box.dataset.id)) return;
+  if(id === box.dataset.id){
+    placed.set(id,true);
+    box.classList.add('is-correct');
+    chip.style.pointerEvents='none'; chip.style.opacity='.4'; chip.classList.add('ghost');
+    if(placed.size === PAIRS.length) congrats();
+  } else {
+    box.classList.add('flash-wrong');
+    setTimeout(()=> box.classList.remove('flash-wrong'), 480);
+  }
+}
+
+function congrats(){
+  const overlay = document.createElement('div');
+  overlay.className = 'overlay';
+  overlay.innerHTML = `
+    <div class="popup">
+      <h2>🎉 Well done!</h2>
+      <p>You matched all CySA+ standards & frameworks.</p>
+      <button class="replay">Replay</button>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.querySelector('.replay').addEventListener('click', ()=>{
+    overlay.remove(); init();
+  });
+}
+
+/* Pointer-drag (iOS/Android/Desktop) */
+function enablePointerDrag(chip){
+  let dragging=false, clone=null, offX=0, offY=0;
+
+  chip.addEventListener('pointerdown', (e)=>{
+    if(chip.classList.contains('ghost')) return;
+    dragging = true;
+    chip.setPointerCapture(e.pointerId);
+    const r = chip.getBoundingClientRect();
+    offX = e.clientX - r.left; offY = e.clientY - r.top;
+    clone = chip.cloneNode(true);
+    Object.assign(clone.style, {
+      position:'fixed', left:(e.clientX-offX)+'px', top:(e.clientY-offY)+'px',
+      width:r.width+'px', zIndex:9999, opacity:.95, pointerEvents:'none'
+    });
+    document.body.appendChild(clone);
+  });
+
+  window.addEventListener('pointermove', (e)=>{
+    if(!dragging || !clone) return;
+    clone.style.left = (e.clientX - offX) + 'px';
+    clone.style.top  = (e.clientY - offY) + 'px';
+  }, {passive:true});
+
+  window.addEventListener('pointerup', (e)=>{
+    if(!dragging) return; dragging=false;
+    if(clone){
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      const target = el ? el.closest('.target') : null;
+      if(target) check(chip.dataset.id, target, chip);
+      clone.remove(); clone = null;
+    }
+    try{ chip.releasePointerCapture(e.pointerId); }catch{}
+  }, {passive:true});
+}
+
+resetBtn.addEventListener('click', init);
+init();
+</script>
+</body>
+</html>
