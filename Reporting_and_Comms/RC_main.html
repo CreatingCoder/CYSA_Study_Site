@@ -1,1 +1,129 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Security Operations</title>
+  <meta name="description" content="Dark, mobile-first landing page with animated gradient and subtle matrix-style digital rain behind five CySA+ domain links."/>
+  <style>
+    :root{
+      --bg1:#0b0d10; --bg2:#102030; --bg3:#1b3650;
+      --text:#e6edf3; --muted:#9fb0c0; --card:rgba(18,22,27,0.75); --border:rgba(255,255,255,0.08);
+      --accent:#65c7ff; --radius:18px; --shadow:0 10px 30px rgba(0,0,0,.35);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;padding:0}
+    body{
+      font:16px/1.55 system-ui,-apple-system,Segoe UI,Inter,Arial,sans-serif;
+      color:var(--text);
+      background:linear-gradient(-45deg,var(--bg1),var(--bg2),var(--bg3),#090c12);
+      background-size:400% 400%;
+      animation:gradientShift 20s ease infinite;
+      min-height:100vh;
+    }
+    @keyframes gradientShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+    a{color:inherit;text-decoration:none}
+
+    /* Digital rain canvas sits behind content */
+    #rainCanvas{position:fixed;inset:0;z-index:0;opacity:.18;pointer-events:none}
+
+    .wrap{position:relative;z-index:1;width:100%;max-width:900px;padding:20px;margin-inline:auto}
+    header{text-align:center;margin-top:40px}
+    h1{margin:0 0 6px 0;font-size:clamp(24px,4vw,36px)}
+    p.tag{margin:0;color:var(--muted)}
+
+    .grid{margin-top:32px;display:grid;gap:20px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+    .tile{backdrop-filter:blur(6px);display:flex;flex-direction:column;justify-content:center;gap:8px;min-height:130px;padding:18px;border:1px solid var(--border);border-radius:var(--radius);background:var(--card);box-shadow:var(--shadow);transition:transform .15s ease,border-color .15s ease,background .15s ease}
+    .tile:hover{transform:translateY(-3px) scale(1.02);border-color:var(--accent);background:rgba(35,55,80,0.8)}
+    .tile span{display:block;font-size:14px;color:var(--muted)}
+    .tile strong{font-size:18px}
+
+    footer{margin-top:40px;text-align:center;color:var(--muted);font-size:12px}
+    code{background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:8px;padding:2px 6px}
+
+    /* Respect motion preferences */
+    @media (prefers-reduced-motion: reduce){
+      body{animation:none}
+    }
+  </style>
+</head>
+<body>
+  <canvas id="rainCanvas" aria-hidden="true"></canvas>
+
+  <div class="wrap">
+    <header>
+      <h1>Security Operations</h1>
+      <p class="tag">Study with me 😊</p>
+    </header>
+
+    <main class="grid">
+
+       <a class="tile" href="https://creatingcoder.github.io/CYSA_Study_Site/Reporting_and_comms/doc_standards.html">
+        <strong>Industry Standards</strong>
+      </a>
+      
+    </main>
+
+    <footer>
+      Shane Morgan
+    </footer>
+  </div>
+
+  <script>
+    (function(){
+      const canvas = document.getElementById('rainCanvas');
+      const ctx = canvas.getContext('2d');
+      let width, height, columns, drops, fontSize, dpr;
+
+      const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      const glyphs = chars.split('');
+
+      function setup(){
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
+        width = canvas.clientWidth = window.innerWidth;
+        height = canvas.clientHeight = window.innerHeight;
+        canvas.width = Math.floor(width * dpr);
+        canvas.height = Math.floor(height * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        fontSize = Math.max(12, Math.min(18, Math.floor(width/60)));
+        columns = Math.ceil(width / fontSize);
+        drops = new Array(columns).fill(0).map(()=> Math.floor(Math.random()*height));
+        ctx.font = `${fontSize}px monospace`;
+      }
+
+      let last = 0;
+      const frameMs = 1000/24; // ~24fps for subtle motion & battery friendliness
+
+      function draw(ts){
+        if(window.matchMedia('(prefers-reduced-motion: reduce)').matches) return; // stop animating
+        if(ts - last < frameMs){ requestAnimationFrame(draw); return; }
+        last = ts;
+
+        // Fade the entire canvas slightly to create trailing effect
+        ctx.fillStyle = 'rgba(0, 8, 14, 0.10)';
+        ctx.fillRect(0, 0, width, height);
+
+        for(let i=0;i<columns;i++){
+          const x = i * fontSize;
+          const y = drops[i] * fontSize;
+          const char = glyphs[(Math.random()*glyphs.length)|0];
+
+          // soft green glow
+          ctx.fillStyle = 'rgba(120, 255, 180, 0.55)';
+          ctx.fillText(char, x, y);
+
+          // randomly reset to create varied streams
+          if(y > height && Math.random() > 0.975){ drops[i] = 0; }
+          drops[i]++;
+        }
+        requestAnimationFrame(draw);
+      }
+
+      window.addEventListener('resize', setup);
+      setup();
+      requestAnimationFrame(draw);
+    })();
+  </script>
+</body>
+</html>
