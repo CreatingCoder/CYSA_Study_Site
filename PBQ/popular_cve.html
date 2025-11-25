@@ -29,7 +29,10 @@
   .title{
     display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:space-between;
   }
-  h1{font-size:1.1rem; margin:0; letter-spacing:.4px;}
+  h1{font-size:1.1rem; margin:0; letter-spacing:.4px; color:var(--ink);}
+  h3{color:var(--ink);}
+  ul, li, p, div, span { color: inherit; } /* keep inheritance from body */
+
   .tabs{display:flex; gap:8px; flex-wrap:wrap;}
   .tab{
     border:1px solid #243244; background:#0e131a; color:var(--ink);
@@ -38,6 +41,7 @@
   }
   .tab.active{background:linear-gradient(90deg, #162235, #101a29); border-color:#38547a; transform:translateY(-1px);}
   .tab:active{transform:translateY(1px) scale(.98);}
+
   .grid{
     display:grid; gap:12px; margin-top:12px;
     grid-template-columns:1fr;
@@ -49,6 +53,7 @@
     background:linear-gradient(180deg, var(--panel), var(--panel2));
     border:1px solid #1f2a36; border-radius:var(--radius);
     padding:14px; box-shadow:0 8px 20px rgba(0,0,0,.35);
+    color:var(--ink);
   }
   .muted{color:var(--muted); font-size:.92rem}
   .btn{
@@ -76,19 +81,22 @@
   }
 
   /* MCQ */
-  .q-title{font-size:1.05rem; margin:0 0 6px 0; font-weight:800}
+  .q-title{font-size:1.05rem; margin:0 0 6px 0; font-weight:800; color:var(--ink);}
   .q-box{
     background:#0c1118; border:1px dashed #243244; padding:12px; border-radius:12px; margin-top:8px;
+    color:var(--ink);
   }
   .choices{display:grid; gap:8px; margin-top:10px;}
   .choice{
     text-align:left; padding:10px 12px; border-radius:12px;
     border:1px solid #233146; background:#0e1520; cursor:pointer; font-weight:600;
+    color:var(--ink); /* <-- force white text on buttons */
   }
   .choice.correct{border-color:rgba(46,204,113,.9); background:rgba(46,204,113,.1)}
   .choice.wrong{border-color:rgba(255,107,107,.9); background:rgba(255,107,107,.1)}
   .feedback{
     margin-top:10px; font-weight:800; padding:10px 12px; border-radius:12px; display:none;
+    color:var(--ink);
   }
   .feedback.good{background:rgba(46,204,113,.12); border:1px solid rgba(46,204,113,.6); display:block;}
   .feedback.bad{background:rgba(255,107,107,.12); border:1px solid rgba(255,107,107,.6); display:block;}
@@ -103,21 +111,24 @@
     display:flex; flex-direction:column; gap:8px;
     min-height:260px; padding:8px; border-radius:12px;
     background:#0c1118; border:1px dashed #243244;
+    color:var(--ink);
   }
   .item{
     padding:10px 12px; border-radius:12px; background:#0e1520;
     border:1px solid #233146; cursor:grab; font-weight:700; user-select:none;
     display:flex; justify-content:space-between; gap:8px; align-items:center;
     touch-action:none;
+    color:var(--ink);
   }
   .item small{font-weight:600; color:var(--muted)}
   .dropzone{
     padding:10px 12px; border-radius:12px; background:#0e1622;
     border:1px solid #233146; min-height:60px;
     display:flex; align-items:center; justify-content:space-between; gap:8px;
+    color:var(--ink);
   }
   .dropzone.hover{outline:2px dashed var(--accent); outline-offset:2px;}
-  .dz-left{font-weight:800}
+  .dz-left{font-weight:800; color:var(--ink);}
   .dz-right{color:var(--muted); font-weight:600}
   .dz-filled .dz-right{color:var(--ink); font-weight:800;}
   .dz-correct{border-color:rgba(46,204,113,.9); background:rgba(46,204,113,.08)}
@@ -367,10 +378,8 @@ function renderNotes(){
 }
 
 function buildChoices(correctItem){
-  // choices are the vulnerability names (short)
   const wrongs = shuffle(CVES.filter(x=>x.id!==correctItem.id)).slice(0,3);
-  const opts = shuffle([correctItem, ...wrongs]);
-  return opts;
+  return shuffle([correctItem, ...wrongs]);
 }
 
 function renderMcq(){
@@ -406,7 +415,6 @@ function renderMcq(){
         feedback.textContent="Correct. Lock it in.";
       }else{
         b.classList.add("wrong");
-        // highlight correct
         [...choicesWrap.children].forEach(ch=>{
           if(ch.textContent.includes(item.label)) ch.classList.add("correct");
         });
@@ -421,30 +429,18 @@ function renderMcq(){
 }
 
 el("#mcq-next").addEventListener("click", ()=>{
-  if(mcqIndex < mcqOrder.length-1){
-    mcqIndex++;
-    renderMcq();
-  }else{
-    showMcqEnd();
-  }
+  if(mcqIndex < mcqOrder.length-1){ mcqIndex++; renderMcq(); }
+  else showMcqEnd();
 });
 el("#mcq-skip").addEventListener("click", ()=>{
-  if(mcqIndex < mcqOrder.length-1){
-    mcqIndex++;
-    renderMcq();
-  }else{
-    showMcqEnd();
-  }
+  if(mcqIndex < mcqOrder.length-1){ mcqIndex++; renderMcq(); }
+  else showMcqEnd();
 });
 el("#mcq-restart").addEventListener("click", ()=>{
-  mcqOrder = shuffle(CVES);
-  mcqIndex = 0; mcqScore = 0;
-  renderMcq();
+  mcqOrder = shuffle(CVES); mcqIndex = 0; mcqScore = 0; renderMcq();
 });
 el("#mcq-shuffle").addEventListener("click", ()=>{
-  mcqOrder = shuffle(mcqOrder);
-  mcqIndex = 0; mcqScore = 0;
-  renderMcq();
+  mcqOrder = shuffle(mcqOrder); mcqIndex = 0; mcqScore = 0; renderMcq();
 });
 
 function showMcqEnd(){
@@ -458,9 +454,7 @@ function showMcqEnd(){
   `;
   el("#go-match").addEventListener("click", ()=>tabMatch.click());
   el("#restart-mcq-2").addEventListener("click", ()=>{
-    mcqOrder = shuffle(CVES);
-    mcqIndex = 0; mcqScore = 0;
-    renderMcq();
+    mcqOrder = shuffle(CVES); mcqIndex = 0; mcqScore = 0; renderMcq();
   });
 }
 
@@ -468,7 +462,7 @@ function showMcqEnd(){
    MATCH MODE (Drag & Drop)
 ======================= */
 let matchCveOrder = shuffle(CVES);
-let matchDefOrder = shuffle(CVES); // drop zones based on defs
+let matchDefOrder = shuffle(CVES);
 const cveList = el("#cve-list");
 const defList = el("#def-list");
 const matchTotal = el("#match-total");
@@ -478,8 +472,7 @@ const matchProgress = el("#match-progress");
 const matchSummary = el("#match-summary");
 
 matchTotal.textContent = CVES.length;
-
-let placed = {};  // defId -> cveId
+let placed = {};
 
 function renderMatch(){
   placed = {};
@@ -490,28 +483,21 @@ function renderMatch(){
   matchProgress.style.width = "0%";
   matchSummary.textContent = "";
 
-  // CVE draggable items
   matchCveOrder.forEach(item=>{
     const d = document.createElement("div");
     d.className="item";
     d.draggable=true;
     d.dataset.cveId=item.id;
     d.innerHTML = `<span>${item.label}</span>`;
-    // drag events
     d.addEventListener("dragstart",(e)=>{
       e.dataTransfer.setData("text/plain", item.id);
       d.style.opacity = "0.6";
     });
-    d.addEventListener("dragend",()=>{
-      d.style.opacity = "1";
-    });
-
-    // touch support (pointer)
+    d.addEventListener("dragend",()=>{ d.style.opacity = "1"; });
     enableTouchDrag(d);
     cveList.appendChild(d);
   });
 
-  // definition drop zones
   matchDefOrder.forEach(item=>{
     const z = document.createElement("div");
     z.className="dropzone";
@@ -520,7 +506,6 @@ function renderMatch(){
       <div class="dz-left">${item.def}</div>
       <div class="dz-right">Drop CVE here</div>
     `;
-    // allow drop
     z.addEventListener("dragover",(e)=>{e.preventDefault(); z.classList.add("hover");});
     z.addEventListener("dragleave",()=>z.classList.remove("hover"));
     z.addEventListener("drop",(e)=>{
@@ -537,7 +522,6 @@ function placeInZone(zone, cveId){
   const cveItem = matchCveOrder.find(x=>x.id===cveId);
   if(!cveItem) return;
 
-  // If this cve was already placed elsewhere, remove it there first
   for(const defId in placed){
     if(placed[defId] === cveId){
       const oldZone = [...defList.children].find(z=>z.dataset.defId===defId);
@@ -553,7 +537,6 @@ function placeInZone(zone, cveId){
   placed[defId] = cveId;
   zone.classList.add("dz-filled");
   zone.querySelector(".dz-right").textContent = cveItem.label;
-
   updateMatchProgress();
 }
 
@@ -570,12 +553,8 @@ el("#match-check").addEventListener("click", ()=>{
     const got = placed[defId];
     zone.classList.remove("dz-correct","dz-wrong");
     if(!got) return;
-    if(got === defId){
-      zone.classList.add("dz-correct");
-      correct++;
-    }else{
-      zone.classList.add("dz-wrong");
-    }
+    if(got === defId){ zone.classList.add("dz-correct"); correct++; }
+    else zone.classList.add("dz-wrong");
   });
   matchCorrect.textContent = correct;
 
@@ -586,9 +565,7 @@ el("#match-check").addEventListener("click", ()=>{
   }
 });
 
-el("#match-reset").addEventListener("click", ()=>{
-  renderMatch();
-});
+el("#match-reset").addEventListener("click", renderMatch);
 el("#match-shuffle").addEventListener("click", ()=>{
   matchCveOrder = shuffle(CVES);
   matchDefOrder = shuffle(CVES);
@@ -596,21 +573,19 @@ el("#match-shuffle").addEventListener("click", ()=>{
 });
 
 /* =======================
-   Touch Drag Support
-   Simple pointer-based drag for mobile
+   Touch Drag Support (mobile)
 ======================= */
 function enableTouchDrag(node){
-  let dragging=false, ghost=null, startX=0, startY=0, offsetX=0, offsetY=0;
+  let dragging=false, ghost=null, offsetX=0, offsetY=0;
 
   node.addEventListener("pointerdown", (e)=>{
-    if(e.pointerType === "mouse") return; // mouse uses native drag
+    if(e.pointerType === "mouse") return;
     dragging = true;
     node.setPointerCapture(e.pointerId);
-    startX = e.clientX; startY = e.clientY;
 
     const rect=node.getBoundingClientRect();
-    offsetX = startX-rect.left;
-    offsetY = startY-rect.top;
+    offsetX = e.clientX-rect.left;
+    offsetY = e.clientY-rect.top;
 
     ghost = node.cloneNode(true);
     ghost.style.position="fixed";
@@ -620,7 +595,6 @@ function enableTouchDrag(node){
     ghost.style.opacity="0.9";
     ghost.style.zIndex="9999";
     ghost.style.pointerEvents="none";
-    ghost.style.cursor="grabbing";
     document.body.appendChild(ghost);
     node.style.opacity="0.4";
   });
@@ -630,7 +604,6 @@ function enableTouchDrag(node){
     ghost.style.left=(e.clientX-offsetX)+"px";
     ghost.style.top=(e.clientY-offsetY)+"px";
 
-    // highlight dropzone under pointer
     [...defList.children].forEach(z=>z.classList.remove("hover"));
     const over = document.elementFromPoint(e.clientX, e.clientY);
     const zone = over?.closest?.(".dropzone");
@@ -641,17 +614,13 @@ function enableTouchDrag(node){
     if(!dragging) return;
     dragging=false;
 
-    // find drop zone under pointer
     [...defList.children].forEach(z=>z.classList.remove("hover"));
     const over = document.elementFromPoint(e.clientX, e.clientY);
     const zone = over?.closest?.(".dropzone");
-    if(zone){
-      placeInZone(zone, node.dataset.cveId);
-    }
+    if(zone) placeInZone(zone, node.dataset.cveId);
 
     node.style.opacity="1";
-    ghost?.remove();
-    ghost=null;
+    ghost?.remove(); ghost=null;
   });
 
   node.addEventListener("pointercancel", ()=>{
