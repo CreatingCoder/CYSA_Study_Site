@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>CySA+ Diamond Intrusion Model — Drag & Drop Quiz</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>CySA+ Diamond Intrusion Model — Elements + Relationships Drag & Drop</title>
 <style>
   :root{
     --bg:#0b0f14; --panel:#141a22; --panel2:#0f141b; --ink:#e6edf3; --muted:#9db0c5;
@@ -27,13 +27,10 @@
   }
   .wrap{max-width:1100px; margin:0 auto; padding:12px 14px;}
   h1{font-size:1.1rem; margin:0; letter-spacing:.4px;}
-  .grid{
-    display:grid; gap:12px; margin-top:12px;
-    grid-template-columns:1fr;
-  }
-  @media(min-width:900px){
-    .grid.two{grid-template-columns:1fr 1.15fr;}
-  }
+
+  .grid{display:grid; gap:12px; margin-top:12px; grid-template-columns:1fr;}
+  @media(min-width:900px){ .grid.two{grid-template-columns:1fr 1.2fr;} }
+
   .card{
     background:linear-gradient(180deg, var(--panel), var(--panel2));
     border:1px solid #1f2a36; border-radius:var(--radius);
@@ -42,13 +39,14 @@
   .pill{
     display:inline-flex; align-items:center; gap:6px;
     background:#0b121a; border:1px solid #233146; color:#cfe3ff;
-    padding:4px 8px; border-radius:999px; font-size:.8rem; font-weight:700;
+    padding:4px 8px; border-radius:999px; font-size:.8rem; font-weight:800;
   }
   .muted{color:var(--muted); font-size:.92rem; line-height:1.45}
+
   .btn-row{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;}
   .btn{
     border:1px solid #2a3a50; background:#0f1620; color:var(--ink);
-    padding:10px 12px; border-radius:12px; cursor:pointer; font-weight:800;
+    padding:10px 12px; border-radius:12px; cursor:pointer; font-weight:900;
     transition:.15s transform ease, .15s border ease, .15s background ease;
     width:100%;
   }
@@ -64,7 +62,7 @@
   }
   .item{
     padding:10px 12px; border-radius:12px; background:#0e1520;
-    border:1px solid #233146; cursor:grab; font-weight:800; user-select:none;
+    border:1px solid #233146; cursor:grab; font-weight:900; user-select:none;
     display:flex; flex-direction:column; gap:4px;
     touch-action:none;
   }
@@ -72,19 +70,17 @@
   .item.dragging{opacity:.5}
 
   /* Diamond area */
-  .diamond-wrap{
-    display:grid; gap:10px;
-    grid-template-columns:1fr;
-  }
   .diamond-stage{
     position:relative;
     background:#0c1118;
     border:1px dashed #243244;
     border-radius:14px;
     padding:10px;
-    min-height:360px;
+    min-height:420px;
   }
   svg{width:100%; height:auto; display:block;}
+
+  /* Element drop zones (blank) */
   .zone{
     position:absolute;
     transform:translate(-50%,-50%);
@@ -93,51 +89,94 @@
     padding:8px 10px;
     border-radius:12px;
     background:#0e1622;
-    border:1px solid #233146;
+    border:1px dashed #223147;
     text-align:center;
-    font-weight:800;
+    font-weight:900;
     font-size:.95rem;
   }
-  .zone .zlabel{display:block; font-size:.9rem; margin-bottom:4px;}
   .zone .zdrop{
-    display:block; font-weight:700; color:var(--muted); font-size:.85rem;
-    padding:6px; border-radius:8px; background:#0b121a; border:1px dashed #223147;
+    display:block;
+    font-weight:800;
+    color:var(--muted);
+    font-size:.85rem;
+    padding:6px;
+    border-radius:8px;
+    background:#0b121a;
+    border:1px dashed #223147;
   }
   .zone.hover{outline:2px dashed var(--accent); outline-offset:2px;}
+  .zone.filled{
+    border-style:solid; border-color:#233146; background:#0f1825;
+  }
   .zone.filled .zdrop{color:var(--ink); border-style:solid; background:#0f1825;}
   .zone.correct{border-color:rgba(46,204,113,.9); background:rgba(46,204,113,.08)}
   .zone.wrong{border-color:rgba(255,107,107,.9); background:rgba(255,107,107,.08)}
 
-  /* Positions for zones (relative to stage) */
-  .zone.top{left:50%; top:9%;}
+  /* Positions (diamond corners/sides) */
+  .zone.top{left:50%; top:8%;}
   .zone.right{left:90%; top:50%;}
-  .zone.bottom{left:50%; top:91%;}
+  .zone.bottom{left:50%; top:92%;}
   .zone.left{left:10%; top:50%;}
+
+  /* Relationship drop zones (blank edge labels) */
+  .relzone{
+    position:absolute;
+    transform:translate(-50%,-50%);
+    min-width:120px;
+    padding:6px 8px;
+    border-radius:999px;
+    background:#0d1520;
+    border:1px dashed #2a3a50;
+    text-align:center;
+    font-weight:900;
+    font-size:.9rem;
+  }
+  .relzone .rdrop{
+    display:block; color:var(--muted); font-size:.82rem; font-weight:800;
+    padding:4px 6px; border-radius:999px; background:#0b121a; border:1px dashed #223147;
+  }
+  .relzone.hover{outline:2px dashed var(--accent); outline-offset:2px;}
+  .relzone.filled{border-style:solid; border-color:#233146; background:#0f1825;}
+  .relzone.filled .rdrop{color:var(--ink); border-style:solid; background:#0f1825;}
+  .relzone.correct{border-color:rgba(46,204,113,.9); background:rgba(46,204,113,.08)}
+  .relzone.wrong{border-color:rgba(255,107,107,.9); background:rgba(255,107,107,.08)}
+
+  /* Relationship positions between corners */
+  .relzone.tr{left:73%; top:26%;}  /* Capability -> Infrastructure */
+  .relzone.rb{left:73%; top:74%;}  /* Infrastructure -> Victim */
+  .relzone.bl{left:27%; top:74%;}  /* Victim -> Adversary */
+  .relzone.lt{left:27%; top:26%;}  /* Adversary -> Capability */
 
   .scoreline{display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:8px;}
   .tiny{font-size:.85rem; color:var(--muted)}
-  .progress{
-    height:8px; background:#0b121a; border:1px solid #202b3a; border-radius:999px; overflow:hidden;
-  }
+  .progress{height:8px; background:#0b121a; border:1px solid #202b3a; border-radius:999px; overflow:hidden;}
   .progress > div{
     height:100%; width:0%;
     background:linear-gradient(90deg, var(--accent), var(--accent2));
     transition:width .25s ease;
   }
 
-  /* Mobile spacing */
+  .legend{
+    display:grid; gap:8px; margin-top:8px; grid-template-columns:1fr;
+  }
+  @media(min-width:520px){ .legend{grid-template-columns:1fr 1fr;} }
+  .legend-item{
+    background:#0c1118; border:1px solid #223147; border-radius:12px; padding:8px;
+    font-size:.9rem; color:var(--muted); font-weight:800;
+  }
+  .hidden{display:none!important;}
+
   @media(max-width:480px){
     .zone{min-width:90px; font-size:.9rem}
-    .zone .zdrop{font-size:.8rem}
+    .zone .zdrop,.relzone .rdrop{font-size:.78rem}
+    .relzone{min-width:100px}
   }
 </style>
 </head>
 <body>
 
 <header>
-  <div class="wrap">
-    <h1>Diamond Intrusion Model (CySA+) — Drag & Drop Quiz</h1>
-  </div>
+  <div class="wrap"><h1>Diamond Intrusion Model — Elements + Relationships Drag & Drop</h1></div>
 </header>
 
 <main class="wrap grid two">
@@ -146,13 +185,13 @@
   <section class="card">
     <div class="pill">Drag Bank</div>
     <p class="muted" style="margin-top:8px">
-      Drag each element into the correct part of the Diamond Model:
-      <b>Adversary, Capability, Infrastructure, Victim</b>.
+      Drag the <b>4 elements</b> and the <b>4 relationship verbs</b> into the blank diamond.
+      No labels on the diagram — you have to remember placement.
     </p>
 
     <div class="progress"><div id="prog"></div></div>
     <div class="scoreline">
-      <div class="tiny">Placed: <span id="placedCount">0</span>/4</div>
+      <div class="tiny">Placed: <span id="placedCount">0</span>/8</div>
       <div class="tiny">Correct: <span id="correctCount">0</span></div>
     </div>
 
@@ -164,20 +203,20 @@
       <button class="btn" id="resetBtn">Reset</button>
       <button class="btn" id="shuffleBtn">Shuffle</button>
       <button class="btn" id="hintBtn">Toggle Hints</button>
+      <button class="btn" id="revealBtn">Reveal Map</button>
     </div>
 
     <div id="summary" class="muted" style="margin-top:10px"></div>
   </section>
 
   <!-- RIGHT: DIAMOND -->
-  <section class="card diamond-wrap">
+  <section class="card">
     <div class="pill">Diamond Diagram</div>
     <p class="muted" style="margin-top:8px">
-      Drop each tile into its matching corner/side. You can re-drag to fix mistakes.
+      Drop elements on corners, and relationship verbs on the edges.
     </p>
 
     <div class="diamond-stage" id="stage">
-      <!-- Diamond SVG -->
       <svg viewBox="0 0 400 400" aria-hidden="true">
         <defs>
           <linearGradient id="g" x1="0" x2="1">
@@ -191,31 +230,35 @@
         <line x1="25" y1="200" x2="375" y2="200" stroke="#2a3a50" stroke-width="2" opacity="0.7"/>
       </svg>
 
-      <!-- Drop Zones -->
-      <div class="zone top dropzone" data-zone="capability">
-        <span class="zlabel">Capability</span>
-        <span class="zdrop">Drop here</span>
-      </div>
+      <!-- Element drop zones (blank) -->
+      <div class="zone top dropzone" data-zone="capability"><span class="zdrop">Drop element</span></div>
+      <div class="zone right dropzone" data-zone="infrastructure"><span class="zdrop">Drop element</span></div>
+      <div class="zone bottom dropzone" data-zone="victim"><span class="zdrop">Drop element</span></div>
+      <div class="zone left dropzone" data-zone="adversary"><span class="zdrop">Drop element</span></div>
 
-      <div class="zone right dropzone" data-zone="infrastructure">
-        <span class="zlabel">Infrastructure</span>
-        <span class="zdrop">Drop here</span>
-      </div>
-
-      <div class="zone bottom dropzone" data-zone="victim">
-        <span class="zlabel">Victim</span>
-        <span class="zdrop">Drop here</span>
-      </div>
-
-      <div class="zone left dropzone" data-zone="adversary">
-        <span class="zlabel">Adversary</span>
-        <span class="zdrop">Drop here</span>
-      </div>
+      <!-- Relationship drop zones (blank edges) -->
+      <!-- Correct edges:
+            Adversary -> Capability : develops
+            Capability -> Infrastructure : uses
+            Infrastructure -> Victim : targets
+            Victim -> Adversary : attracts
+      -->
+      <div class="relzone lt reldrop" data-rel="develops"><span class="rdrop">Drop relationship</span></div>
+      <div class="relzone tr reldrop" data-rel="uses"><span class="rdrop">Drop relationship</span></div>
+      <div class="relzone rb reldrop" data-rel="targets"><span class="rdrop">Drop relationship</span></div>
+      <div class="relzone bl reldrop" data-rel="attracts"><span class="rdrop">Drop relationship</span></div>
     </div>
 
-    <div class="muted tiny">
-      Remember: Diamond Model links <b>who</b> (adversary), <b>what</b> (capability),
-      <b>how/where</b> (infrastructure), and <b>who they hit</b> (victim).
+    <!-- Reveal legend (hidden by default) -->
+    <div id="legend" class="legend hidden" style="margin-top:10px">
+      <div class="legend-item"><b>Top:</b> Capability</div>
+      <div class="legend-item"><b>Right:</b> Infrastructure</div>
+      <div class="legend-item"><b>Bottom:</b> Victim</div>
+      <div class="legend-item"><b>Left:</b> Adversary</div>
+      <div class="legend-item"><b>Adversary → Capability:</b> Develops</div>
+      <div class="legend-item"><b>Capability → Infrastructure:</b> Uses</div>
+      <div class="legend-item"><b>Infrastructure → Victim:</b> Targets</div>
+      <div class="legend-item"><b>Victim → Adversary:</b> Attracts</div>
     </div>
   </section>
 
@@ -226,31 +269,20 @@
    DATA
 ========================= */
 const ELEMENTS = [
-  {
-    id:"adversary",
-    title:"Adversary",
-    hint:"The attacker / threat actor",
-    example:"APT group, cybercriminal, insider"
-  },
-  {
-    id:"capability",
-    title:"Capability",
-    hint:"Tools & techniques used",
-    example:"Malware, exploit, phishing kit, TTPs"
-  },
-  {
-    id:"infrastructure",
-    title:"Infrastructure",
-    hint:"Systems/resources used to deliver capability",
-    example:"C2 servers, botnets, domains, IPs"
-  },
-  {
-    id:"victim",
-    title:"Victim",
-    hint:"Targeted entity/person/system",
-    example:"Org, user, device, sector"
-  }
+  { id:"adversary", title:"Adversary", hint:"Who is attacking?", example:"APT group, criminal, insider" },
+  { id:"capability", title:"Capability", hint:"What do they use?", example:"Malware, exploit, TTPs" },
+  { id:"infrastructure", title:"Infrastructure", hint:"Where/how delivered?", example:"C2, domains, IPs, botnet" },
+  { id:"victim", title:"Victim", hint:"Who/what is targeted?", example:"Org, users, systems, sector" }
 ];
+
+const RELS = [
+  { id:"develops", title:"Develops", hint:"Adversary → Capability", example:"Actor creates tools/malware" },
+  { id:"uses", title:"Uses", hint:"Capability → Infrastructure", example:"Tools leverage infra" },
+  { id:"targets", title:"Targets", hint:"Infrastructure → Victim", example:"Infra reaches victim" },
+  { id:"attracts", title:"Attracts", hint:"Victim → Adversary", example:"Victim value draws attacker" }
+];
+
+const ALL_TILES = [...ELEMENTS.map(e=>({type:"element",...e})), ...RELS.map(r=>({type:"rel",...r}))];
 
 const shuffle = (arr) => {
   const a = arr.slice();
@@ -262,120 +294,152 @@ const shuffle = (arr) => {
 };
 const el = (q)=>document.querySelector(q);
 
-let order = shuffle(ELEMENTS);
-let placed = {}; // zoneId -> elementId
+let order = shuffle(ALL_TILES);
+let placed = { elements:{}, rels:{} }; // zoneId->elemId, relZoneId->relId
 let hintsOn = false;
+let labelsRevealed = false;
 
 /* =========================
-   RENDER BANK + ZONES
+   RENDER BANK
 ========================= */
 const bank = el("#bank");
-const zones = [...document.querySelectorAll(".dropzone")];
+const elemZones = [...document.querySelectorAll(".dropzone")];
+const relZones  = [...document.querySelectorAll(".reldrop")];
+const allZones = [...elemZones, ...relZones];
 
 function renderBank(){
   bank.innerHTML="";
-  order.forEach(e=>{
+  order.forEach(t=>{
     const d = document.createElement("div");
     d.className="item";
     d.draggable=true;
-    d.dataset.itemId=e.id;
+    d.dataset.itemId=t.id;
+    d.dataset.type=t.type;
     d.innerHTML = `
-      <div>${e.title}</div>
+      <div>${t.title}</div>
       <small class="hint" style="display:${hintsOn?'block':'none'}">
-        Hint: ${e.hint}<br/>Example: ${e.example}
+        Hint: ${t.hint}<br/>Example: ${t.example}
       </small>
     `;
-    // desktop drag
     d.addEventListener("dragstart",(ev)=>{
-      ev.dataTransfer.setData("text/plain", e.id);
+      ev.dataTransfer.setData("text/plain", JSON.stringify({id:t.id,type:t.type}));
       d.classList.add("dragging");
     });
     d.addEventListener("dragend",()=>d.classList.remove("dragging"));
-
     enableTouchDrag(d);
     bank.appendChild(d);
   });
 }
 
 function resetZonesVisual(){
-  zones.forEach(z=>{
+  elemZones.forEach(z=>{
     z.classList.remove("hover","filled","correct","wrong");
-    z.querySelector(".zdrop").textContent="Drop here";
+    z.querySelector(".zdrop").textContent="Drop element";
+  });
+  relZones.forEach(z=>{
+    z.classList.remove("hover","filled","correct","wrong");
+    z.querySelector(".rdrop").textContent="Drop relationship";
   });
 }
 
 /* =========================
    DROP LOGIC
 ========================= */
-zones.forEach(z=>{
+allZones.forEach(z=>{
   z.addEventListener("dragover",(e)=>{e.preventDefault(); z.classList.add("hover");});
   z.addEventListener("dragleave",()=>z.classList.remove("hover"));
   z.addEventListener("drop",(e)=>{
     e.preventDefault();
     z.classList.remove("hover");
-    const itemId = e.dataTransfer.getData("text/plain");
-    placeItem(z, itemId);
+    const payload = JSON.parse(e.dataTransfer.getData("text/plain"));
+    placeItem(z, payload.id, payload.type);
   });
 });
 
-function placeItem(zone, itemId){
-  const zoneId = zone.dataset.zone;
+function placeItem(zone, itemId, type){
+  if(zone.classList.contains("dropzone") && type!=="element") return;  // wrong type
+  if(zone.classList.contains("reldrop")  && type!=="rel") return;      // wrong type
 
-  // If item was placed elsewhere, clear it there
-  for(const zId in placed){
-    if(placed[zId] === itemId){
-      const oldZone = zones.find(x=>x.dataset.zone===zId);
-      if(oldZone){
-        oldZone.classList.remove("filled","correct","wrong");
-        oldZone.querySelector(".zdrop").textContent="Drop here";
+  // If item already placed elsewhere, clear old spot
+  if(type==="element"){
+    for(const zId in placed.elements){
+      if(placed.elements[zId]===itemId){
+        const oldZone = elemZones.find(x=>x.dataset.zone===zId);
+        if(oldZone){
+          oldZone.classList.remove("filled","correct","wrong");
+          oldZone.querySelector(".zdrop").textContent="Drop element";
+        }
+        delete placed.elements[zId];
       }
-      delete placed[zId];
     }
+    const zoneId = zone.dataset.zone;
+    placed.elements[zoneId]=itemId;
+    zone.classList.add("filled");
+    zone.querySelector(".zdrop").textContent = ELEMENTS.find(x=>x.id===itemId).title;
+  } else {
+    for(const zId in placed.rels){
+      if(placed.rels[zId]===itemId){
+        const oldZone = relZones.find(x=>x.dataset.rel===zId);
+        if(oldZone){
+          oldZone.classList.remove("filled","correct","wrong");
+          oldZone.querySelector(".rdrop").textContent="Drop relationship";
+        }
+        delete placed.rels[zId];
+      }
+    }
+    const zoneId = zone.dataset.rel;
+    placed.rels[zoneId]=itemId;
+    zone.classList.add("filled");
+    zone.querySelector(".rdrop").textContent = RELS.find(x=>x.id===itemId).title;
   }
-
-  placed[zoneId] = itemId;
-  zone.classList.add("filled");
-  const itemObj = ELEMENTS.find(x=>x.id===itemId);
-  zone.querySelector(".zdrop").textContent=itemObj.title;
 
   updateProgress();
 }
 
 function updateProgress(){
-  const placedCount = Object.keys(placed).length;
+  const placedCount = Object.keys(placed.elements).length + Object.keys(placed.rels).length;
   el("#placedCount").textContent = placedCount;
-  el("#prog").style.width = (placedCount/4*100).toFixed(0)+"%";
+  el("#prog").style.width = (placedCount/8*100).toFixed(0)+"%";
 }
 
 /* =========================
-   CHECK / RESET / SHUFFLE / HINTS
+   CHECK / RESET / SHUFFLE / HINTS / REVEAL
 ========================= */
 el("#checkBtn").addEventListener("click", ()=>{
-  let correct = 0;
-  zones.forEach(z=>{
-    const zoneId = z.dataset.zone;
-    const got = placed[zoneId];
+  let correct=0;
+
+  // check elements
+  elemZones.forEach(z=>{
+    const zoneId=z.dataset.zone;
+    const got=placed.elements[zoneId];
     z.classList.remove("correct","wrong");
     if(!got) return;
-    if(got === zoneId){
-      z.classList.add("correct");
-      correct++;
-    } else {
-      z.classList.add("wrong");
-    }
+    if(got===zoneId){ z.classList.add("correct"); correct++; }
+    else { z.classList.add("wrong"); }
   });
-  el("#correctCount").textContent = correct;
 
-  const summary = el("#summary");
-  if(correct === 4){
-    summary.innerHTML = `<b style="color:var(--good)">Perfect. Diamond model elements locked in.</b>`;
-  } else {
-    summary.innerHTML = `You got <b>${correct}/4</b>. Fix the red zones and check again.`;
+  // check relationships
+  relZones.forEach(z=>{
+    const zoneId=z.dataset.rel;          // develops/uses/targets/attracts
+    const got=placed.rels[zoneId];
+    z.classList.remove("correct","wrong");
+    if(!got) return;
+    if(got===zoneId){ z.classList.add("correct"); correct++; }
+    else { z.classList.add("wrong"); }
+  });
+
+  el("#correctCount").textContent=correct;
+
+  const summary=el("#summary");
+  if(correct===8){
+    summary.innerHTML=`<b style="color:var(--good)">Perfect. Elements + relationships are locked in.</b>`;
+  }else{
+    summary.innerHTML=`You got <b>${correct}/8</b>. Fix the red zones and check again.`;
   }
 });
 
 el("#resetBtn").addEventListener("click", ()=>{
-  placed = {};
+  placed={elements:{},rels:{}};
   resetZonesVisual();
   updateProgress();
   el("#correctCount").textContent=0;
@@ -383,8 +447,8 @@ el("#resetBtn").addEventListener("click", ()=>{
 });
 
 el("#shuffleBtn").addEventListener("click", ()=>{
-  order = shuffle(ELEMENTS);
-  placed = {};
+  order=shuffle(ALL_TILES);
+  placed={elements:{},rels:{}};
   renderBank();
   resetZonesVisual();
   updateProgress();
@@ -393,8 +457,35 @@ el("#shuffleBtn").addEventListener("click", ()=>{
 });
 
 el("#hintBtn").addEventListener("click", ()=>{
-  hintsOn = !hintsOn;
+  hintsOn=!hintsOn;
   renderBank();
+});
+
+el("#revealBtn").addEventListener("click", ()=>{
+  labelsRevealed=!labelsRevealed;
+  el("#legend").classList.toggle("hidden", !labelsRevealed);
+
+  // faintly label empty zones if revealed
+  elemZones.forEach(z=>{
+    if(labelsRevealed && !z.classList.contains("filled")){
+      z.querySelector(".zdrop").textContent = z.dataset.zone.toUpperCase();
+      z.querySelector(".zdrop").style.color="var(--muted)";
+    }
+    if(!labelsRevealed && !z.classList.contains("filled")){
+      z.querySelector(".zdrop").textContent="Drop element";
+      z.querySelector(".zdrop").style.color="var(--muted)";
+    }
+  });
+  relZones.forEach(z=>{
+    if(labelsRevealed && !z.classList.contains("filled")){
+      z.querySelector(".rdrop").textContent = z.dataset.rel.toUpperCase();
+      z.querySelector(".rdrop").style.color="var(--muted)";
+    }
+    if(!labelsRevealed && !z.classList.contains("filled")){
+      z.querySelector(".rdrop").textContent="Drop relationship";
+      z.querySelector(".rdrop").style.color="var(--muted)";
+    }
+  });
 });
 
 /* =========================
@@ -402,8 +493,9 @@ el("#hintBtn").addEventListener("click", ()=>{
 ========================= */
 function enableTouchDrag(node){
   let dragging=false, ghost=null, offsetX=0, offsetY=0;
+
   node.addEventListener("pointerdown",(e)=>{
-    if(e.pointerType==="mouse") return; // native drag for mouse
+    if(e.pointerType==="mouse") return; // mouse uses native drag
     dragging=true;
     node.setPointerCapture(e.pointerId);
 
@@ -428,9 +520,9 @@ function enableTouchDrag(node){
     ghost.style.left=(e.clientX-offsetX)+"px";
     ghost.style.top=(e.clientY-offsetY)+"px";
 
-    zones.forEach(z=>z.classList.remove("hover"));
+    allZones.forEach(z=>z.classList.remove("hover"));
     const over=document.elementFromPoint(e.clientX,e.clientY);
-    const zone=over?.closest?.(".dropzone");
+    const zone=over?.closest?.(".dropzone, .reldrop");
     if(zone) zone.classList.add("hover");
   });
 
@@ -438,10 +530,12 @@ function enableTouchDrag(node){
     if(!dragging) return;
     dragging=false;
 
-    zones.forEach(z=>z.classList.remove("hover"));
+    allZones.forEach(z=>z.classList.remove("hover"));
     const over=document.elementFromPoint(e.clientX,e.clientY);
-    const zone=over?.closest?.(".dropzone");
-    if(zone) placeItem(zone, node.dataset.itemId);
+    const zone=over?.closest?.(".dropzone, .reldrop");
+    if(zone){
+      placeItem(zone, node.dataset.itemId, node.dataset.type);
+    }
 
     node.style.opacity="1";
     ghost?.remove(); ghost=null;
