@@ -25,9 +25,7 @@
   }
 
   /* FORCE LIGHT TEXT EVERYWHERE BY DEFAULT */
-  body, body *{
-    color:var(--ink);
-  }
+  body, body *{ color:var(--ink); }
 
   header{
     position:sticky; top:0; z-index:5;
@@ -51,7 +49,6 @@
     color:var(--ink);
   }
 
-  /* muted text overrides */
   .muted{color:var(--muted)!important; font-size:.92rem; line-height:1.45}
   .tiny{font-size:.85rem; color:var(--muted)!important;}
 
@@ -132,7 +129,7 @@
   .zone.correct{border-color:rgba(46,204,113,.9); background:rgba(46,204,113,.08)}
   .zone.wrong{border-color:rgba(255,107,107,.9); background:rgba(255,107,107,.08)}
 
-  /* Positions (diamond corners/sides) */
+  /* Positions (diamond corners) */
   .zone.top{left:50%; top:8%;}
   .zone.right{left:90%; top:50%;}
   .zone.bottom{left:50%; top:92%;}
@@ -165,11 +162,17 @@
   .relzone.correct{border-color:rgba(46,204,113,.9); background:rgba(46,204,113,.08)}
   .relzone.wrong{border-color:rgba(255,107,107,.9); background:rgba(255,107,107,.08)}
 
-  /* Relationship positions */
-  .relzone.tr{left:73%; top:26%;}
-  .relzone.rb{left:73%; top:74%;}
-  .relzone.bl{left:27%; top:74%;}
-  .relzone.lt{left:27%; top:26%;}
+  /* Relationship positions for CORRECT diamond:
+     top=Capability, bottom=Infrastructure, left=Adversary, right=Victim
+     - Adversary -> Capability : develops (left-top edge)
+     - Capability -> Infrastructure : uses (vertical center)
+     - Infrastructure -> Victim : targets (bottom-right edge)
+     - Victim -> Adversary : attracts (horizontal center)
+  */
+  .relzone.lt{left:27%; top:26%;}   /* develops */
+  .relzone.rb{left:73%; top:74%;}  /* targets */
+  .relzone.cv{left:50%; top:42%;}  /* uses (center vertical) */
+  .relzone.ch{left:50%; top:58%;}  /* attracts (center horizontal) */
 
   .scoreline{display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:8px;}
   .progress{
@@ -239,7 +242,7 @@
   <section class="card">
     <div class="pill">Diamond Diagram</div>
     <p class="muted" style="margin-top:8px">
-      Drop elements on corners, and relationship verbs on the edges.
+      Drop elements on corners, and relationship verbs on the edges/center lines.
     </p>
 
     <div class="diamond-stage" id="stage">
@@ -256,24 +259,25 @@
         <line x1="25" y1="200" x2="375" y2="200" stroke="#2a3a50" stroke-width="2" opacity="0.7"/>
       </svg>
 
-      <!-- Element drop zones (blank) -->
+      <!-- Element drop zones (blank)
+           FIXED to correct Diamond: Capability opposite Infrastructure -->
       <div class="zone top dropzone" data-zone="capability"><span class="zdrop">Drop element</span></div>
-      <div class="zone right dropzone" data-zone="infrastructure"><span class="zdrop">Drop element</span></div>
-      <div class="zone bottom dropzone" data-zone="victim"><span class="zdrop">Drop element</span></div>
+      <div class="zone right dropzone" data-zone="victim"><span class="zdrop">Drop element</span></div>
+      <div class="zone bottom dropzone" data-zone="infrastructure"><span class="zdrop">Drop element</span></div>
       <div class="zone left dropzone" data-zone="adversary"><span class="zdrop">Drop element</span></div>
 
-      <!-- Relationship drop zones (blank edges) -->
+      <!-- Relationship drop zones (blank) -->
       <div class="relzone lt reldrop" data-rel="develops"><span class="rdrop">Drop relationship</span></div>
-      <div class="relzone tr reldrop" data-rel="uses"><span class="rdrop">Drop relationship</span></div>
+      <div class="relzone cv reldrop" data-rel="uses"><span class="rdrop">Drop relationship</span></div>
       <div class="relzone rb reldrop" data-rel="targets"><span class="rdrop">Drop relationship</span></div>
-      <div class="relzone bl reldrop" data-rel="attracts"><span class="rdrop">Drop relationship</span></div>
+      <div class="relzone ch reldrop" data-rel="attracts"><span class="rdrop">Drop relationship</span></div>
     </div>
 
     <!-- Reveal legend (hidden by default) -->
     <div id="legend" class="legend hidden" style="margin-top:10px">
       <div class="legend-item"><b>Top:</b> Capability</div>
-      <div class="legend-item"><b>Right:</b> Infrastructure</div>
-      <div class="legend-item"><b>Bottom:</b> Victim</div>
+      <div class="legend-item"><b>Right:</b> Victim</div>
+      <div class="legend-item"><b>Bottom:</b> Infrastructure</div>
       <div class="legend-item"><b>Left:</b> Adversary</div>
       <div class="legend-item"><b>Adversary → Capability:</b> Develops</div>
       <div class="legend-item"><b>Capability → Infrastructure:</b> Uses</div>
