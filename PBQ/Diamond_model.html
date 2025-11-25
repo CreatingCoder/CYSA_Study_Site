@@ -6,46 +6,64 @@
 <title>CySA+ Diamond Intrusion Model — Elements + Relationships Drag & Drop</title>
 <style>
   :root{
-    --bg:#0b0f14; --panel:#141a22; --panel2:#0f141b; --ink:#e6edf3; --muted:#9db0c5;
+    --bg:#0b0f14; --panel:#141a22; --panel2:#0f141b;
+    --ink:#e6edf3; --muted:#9db0c5;
     --good:#2ecc71; --bad:#ff6b6b; --accent:#4da3ff; --accent2:#7c5cff;
     --radius:16px;
   }
+
   *{box-sizing:border-box}
+
   body{
-    margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    margin:0;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
     background:
       radial-gradient(1200px 800px at 10% -10%, #1a2330 0%, transparent 55%),
       radial-gradient(900px 700px at 110% 10%, #151a2b 0%, transparent 60%),
       var(--bg);
     color:var(--ink);
   }
+
+  /* FORCE LIGHT TEXT EVERYWHERE BY DEFAULT */
+  body, body *{
+    color:var(--ink);
+  }
+
   header{
     position:sticky; top:0; z-index:5;
     background:linear-gradient(180deg, rgba(11,15,20,.98), rgba(11,15,20,.7));
     backdrop-filter: blur(6px);
     border-bottom:1px solid #1f2a36;
   }
+
   .wrap{max-width:1100px; margin:0 auto; padding:12px 14px;}
-  h1{font-size:1.1rem; margin:0; letter-spacing:.4px;}
+  h1{font-size:1.1rem; margin:0; letter-spacing:.4px; color:var(--ink);}
 
   .grid{display:grid; gap:12px; margin-top:12px; grid-template-columns:1fr;}
   @media(min-width:900px){ .grid.two{grid-template-columns:1fr 1.2fr;} }
 
   .card{
     background:linear-gradient(180deg, var(--panel), var(--panel2));
-    border:1px solid #1f2a36; border-radius:var(--radius);
-    padding:14px; box-shadow:0 8px 20px rgba(0,0,0,.35);
+    border:1px solid #1f2a36;
+    border-radius:var(--radius);
+    padding:14px;
+    box-shadow:0 8px 20px rgba(0,0,0,.35);
+    color:var(--ink);
   }
+
+  /* muted text overrides */
+  .muted{color:var(--muted)!important; font-size:.92rem; line-height:1.45}
+  .tiny{font-size:.85rem; color:var(--muted)!important;}
+
   .pill{
     display:inline-flex; align-items:center; gap:6px;
-    background:#0b121a; border:1px solid #233146; color:#cfe3ff;
+    background:#0b121a; border:1px solid #233146; color:#cfe3ff!important;
     padding:4px 8px; border-radius:999px; font-size:.8rem; font-weight:800;
   }
-  .muted{color:var(--muted); font-size:.92rem; line-height:1.45}
 
   .btn-row{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;}
   .btn{
-    border:1px solid #2a3a50; background:#0f1620; color:var(--ink);
+    border:1px solid #2a3a50; background:#0f1620; color:var(--ink)!important;
     padding:10px 12px; border-radius:12px; cursor:pointer; font-weight:900;
     transition:.15s transform ease, .15s border ease, .15s background ease;
     width:100%;
@@ -65,8 +83,9 @@
     border:1px solid #233146; cursor:grab; font-weight:900; user-select:none;
     display:flex; flex-direction:column; gap:4px;
     touch-action:none;
+    color:var(--ink)!important;
   }
-  .item small{font-weight:600; color:var(--muted)}
+  .item small{font-weight:600; color:var(--muted)!important}
   .item.dragging{opacity:.5}
 
   /* Diamond area */
@@ -93,11 +112,12 @@
     text-align:center;
     font-weight:900;
     font-size:.95rem;
+    color:var(--ink)!important;
   }
   .zone .zdrop{
     display:block;
     font-weight:800;
-    color:var(--muted);
+    color:var(--muted)!important;
     font-size:.85rem;
     padding:6px;
     border-radius:8px;
@@ -108,7 +128,7 @@
   .zone.filled{
     border-style:solid; border-color:#233146; background:#0f1825;
   }
-  .zone.filled .zdrop{color:var(--ink); border-style:solid; background:#0f1825;}
+  .zone.filled .zdrop{color:var(--ink)!important; border-style:solid; background:#0f1825;}
   .zone.correct{border-color:rgba(46,204,113,.9); background:rgba(46,204,113,.08)}
   .zone.wrong{border-color:rgba(255,107,107,.9); background:rgba(255,107,107,.08)}
 
@@ -118,7 +138,7 @@
   .zone.bottom{left:50%; top:92%;}
   .zone.left{left:10%; top:50%;}
 
-  /* Relationship drop zones (blank edge labels) */
+  /* Relationship drop zones */
   .relzone{
     position:absolute;
     transform:translate(-50%,-50%);
@@ -130,26 +150,31 @@
     text-align:center;
     font-weight:900;
     font-size:.9rem;
+    color:var(--ink)!important;
   }
   .relzone .rdrop{
-    display:block; color:var(--muted); font-size:.82rem; font-weight:800;
-    padding:4px 6px; border-radius:999px; background:#0b121a; border:1px dashed #223147;
+    display:block;
+    color:var(--muted)!important;
+    font-size:.82rem; font-weight:800;
+    padding:4px 6px; border-radius:999px;
+    background:#0b121a; border:1px dashed #223147;
   }
   .relzone.hover{outline:2px dashed var(--accent); outline-offset:2px;}
   .relzone.filled{border-style:solid; border-color:#233146; background:#0f1825;}
-  .relzone.filled .rdrop{color:var(--ink); border-style:solid; background:#0f1825;}
+  .relzone.filled .rdrop{color:var(--ink)!important; border-style:solid; background:#0f1825;}
   .relzone.correct{border-color:rgba(46,204,113,.9); background:rgba(46,204,113,.08)}
   .relzone.wrong{border-color:rgba(255,107,107,.9); background:rgba(255,107,107,.08)}
 
-  /* Relationship positions between corners */
-  .relzone.tr{left:73%; top:26%;}  /* Capability -> Infrastructure */
-  .relzone.rb{left:73%; top:74%;}  /* Infrastructure -> Victim */
-  .relzone.bl{left:27%; top:74%;}  /* Victim -> Adversary */
-  .relzone.lt{left:27%; top:26%;}  /* Adversary -> Capability */
+  /* Relationship positions */
+  .relzone.tr{left:73%; top:26%;}
+  .relzone.rb{left:73%; top:74%;}
+  .relzone.bl{left:27%; top:74%;}
+  .relzone.lt{left:27%; top:26%;}
 
   .scoreline{display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:8px;}
-  .tiny{font-size:.85rem; color:var(--muted)}
-  .progress{height:8px; background:#0b121a; border:1px solid #202b3a; border-radius:999px; overflow:hidden;}
+  .progress{
+    height:8px; background:#0b121a; border:1px solid #202b3a; border-radius:999px; overflow:hidden;
+  }
   .progress > div{
     height:100%; width:0%;
     background:linear-gradient(90deg, var(--accent), var(--accent2));
@@ -162,8 +187,9 @@
   @media(min-width:520px){ .legend{grid-template-columns:1fr 1fr;} }
   .legend-item{
     background:#0c1118; border:1px solid #223147; border-radius:12px; padding:8px;
-    font-size:.9rem; color:var(--muted); font-weight:800;
+    font-size:.9rem; color:var(--ink)!important; font-weight:800;
   }
+  .legend-item b{color:var(--ink)!important;}
   .hidden{display:none!important;}
 
   @media(max-width:480px){
@@ -237,12 +263,6 @@
       <div class="zone left dropzone" data-zone="adversary"><span class="zdrop">Drop element</span></div>
 
       <!-- Relationship drop zones (blank edges) -->
-      <!-- Correct edges:
-            Adversary -> Capability : develops
-            Capability -> Infrastructure : uses
-            Infrastructure -> Victim : targets
-            Victim -> Adversary : attracts
-      -->
       <div class="relzone lt reldrop" data-rel="develops"><span class="rdrop">Drop relationship</span></div>
       <div class="relzone tr reldrop" data-rel="uses"><span class="rdrop">Drop relationship</span></div>
       <div class="relzone rb reldrop" data-rel="targets"><span class="rdrop">Drop relationship</span></div>
@@ -282,7 +302,10 @@ const RELS = [
   { id:"attracts", title:"Attracts", hint:"Victim → Adversary", example:"Victim value draws attacker" }
 ];
 
-const ALL_TILES = [...ELEMENTS.map(e=>({type:"element",...e})), ...RELS.map(r=>({type:"rel",...r}))];
+const ALL_TILES = [
+  ...ELEMENTS.map(e=>({type:"element",...e})),
+  ...RELS.map(r=>({type:"rel",...r}))
+];
 
 const shuffle = (arr) => {
   const a = arr.slice();
@@ -295,7 +318,7 @@ const shuffle = (arr) => {
 const el = (q)=>document.querySelector(q);
 
 let order = shuffle(ALL_TILES);
-let placed = { elements:{}, rels:{} }; // zoneId->elemId, relZoneId->relId
+let placed = { elements:{}, rels:{} };
 let hintsOn = false;
 let labelsRevealed = false;
 
@@ -305,7 +328,7 @@ let labelsRevealed = false;
 const bank = el("#bank");
 const elemZones = [...document.querySelectorAll(".dropzone")];
 const relZones  = [...document.querySelectorAll(".reldrop")];
-const allZones = [...elemZones, ...relZones];
+const allZones  = [...elemZones, ...relZones];
 
 function renderBank(){
   bank.innerHTML="";
@@ -335,10 +358,12 @@ function resetZonesVisual(){
   elemZones.forEach(z=>{
     z.classList.remove("hover","filled","correct","wrong");
     z.querySelector(".zdrop").textContent="Drop element";
+    z.querySelector(".zdrop").style.color="var(--muted)";
   });
   relZones.forEach(z=>{
     z.classList.remove("hover","filled","correct","wrong");
     z.querySelector(".rdrop").textContent="Drop relationship";
+    z.querySelector(".rdrop").style.color="var(--muted)";
   });
 }
 
@@ -357,10 +382,9 @@ allZones.forEach(z=>{
 });
 
 function placeItem(zone, itemId, type){
-  if(zone.classList.contains("dropzone") && type!=="element") return;  // wrong type
-  if(zone.classList.contains("reldrop")  && type!=="rel") return;      // wrong type
+  if(zone.classList.contains("dropzone") && type!=="element") return;
+  if(zone.classList.contains("reldrop")  && type!=="rel") return;
 
-  // If item already placed elsewhere, clear old spot
   if(type==="element"){
     for(const zId in placed.elements){
       if(placed.elements[zId]===itemId){
@@ -368,6 +392,7 @@ function placeItem(zone, itemId, type){
         if(oldZone){
           oldZone.classList.remove("filled","correct","wrong");
           oldZone.querySelector(".zdrop").textContent="Drop element";
+          oldZone.querySelector(".zdrop").style.color="var(--muted)";
         }
         delete placed.elements[zId];
       }
@@ -376,6 +401,7 @@ function placeItem(zone, itemId, type){
     placed.elements[zoneId]=itemId;
     zone.classList.add("filled");
     zone.querySelector(".zdrop").textContent = ELEMENTS.find(x=>x.id===itemId).title;
+    zone.querySelector(".zdrop").style.color="var(--ink)";
   } else {
     for(const zId in placed.rels){
       if(placed.rels[zId]===itemId){
@@ -383,6 +409,7 @@ function placeItem(zone, itemId, type){
         if(oldZone){
           oldZone.classList.remove("filled","correct","wrong");
           oldZone.querySelector(".rdrop").textContent="Drop relationship";
+          oldZone.querySelector(".rdrop").style.color="var(--muted)";
         }
         delete placed.rels[zId];
       }
@@ -391,6 +418,7 @@ function placeItem(zone, itemId, type){
     placed.rels[zoneId]=itemId;
     zone.classList.add("filled");
     zone.querySelector(".rdrop").textContent = RELS.find(x=>x.id===itemId).title;
+    zone.querySelector(".rdrop").style.color="var(--ink)";
   }
 
   updateProgress();
@@ -408,7 +436,6 @@ function updateProgress(){
 el("#checkBtn").addEventListener("click", ()=>{
   let correct=0;
 
-  // check elements
   elemZones.forEach(z=>{
     const zoneId=z.dataset.zone;
     const got=placed.elements[zoneId];
@@ -418,9 +445,8 @@ el("#checkBtn").addEventListener("click", ()=>{
     else { z.classList.add("wrong"); }
   });
 
-  // check relationships
   relZones.forEach(z=>{
-    const zoneId=z.dataset.rel;          // develops/uses/targets/attracts
+    const zoneId=z.dataset.rel;
     const got=placed.rels[zoneId];
     z.classList.remove("correct","wrong");
     if(!got) return;
@@ -431,11 +457,9 @@ el("#checkBtn").addEventListener("click", ()=>{
   el("#correctCount").textContent=correct;
 
   const summary=el("#summary");
-  if(correct===8){
-    summary.innerHTML=`<b style="color:var(--good)">Perfect. Elements + relationships are locked in.</b>`;
-  }else{
-    summary.innerHTML=`You got <b>${correct}/8</b>. Fix the red zones and check again.`;
-  }
+  summary.innerHTML = (correct===8)
+    ? `<b style="color:var(--good)">Perfect. Elements + relationships are locked in.</b>`
+    : `You got <b>${correct}/8</b>. Fix the red zones and check again.`;
 });
 
 el("#resetBtn").addEventListener("click", ()=>{
@@ -465,7 +489,6 @@ el("#revealBtn").addEventListener("click", ()=>{
   labelsRevealed=!labelsRevealed;
   el("#legend").classList.toggle("hidden", !labelsRevealed);
 
-  // faintly label empty zones if revealed
   elemZones.forEach(z=>{
     if(labelsRevealed && !z.classList.contains("filled")){
       z.querySelector(".zdrop").textContent = z.dataset.zone.toUpperCase();
@@ -476,6 +499,7 @@ el("#revealBtn").addEventListener("click", ()=>{
       z.querySelector(".zdrop").style.color="var(--muted)";
     }
   });
+
   relZones.forEach(z=>{
     if(labelsRevealed && !z.classList.contains("filled")){
       z.querySelector(".rdrop").textContent = z.dataset.rel.toUpperCase();
@@ -495,7 +519,7 @@ function enableTouchDrag(node){
   let dragging=false, ghost=null, offsetX=0, offsetY=0;
 
   node.addEventListener("pointerdown",(e)=>{
-    if(e.pointerType==="mouse") return; // mouse uses native drag
+    if(e.pointerType==="mouse") return;
     dragging=true;
     node.setPointerCapture(e.pointerId);
 
