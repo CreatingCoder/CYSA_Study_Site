@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CySA+ Diamond Intrusion Model — Drag & Drop Quiz</title>
+<style>
+  :root{
+    --bg:#0b0f14; --panel:#141a22; --panel2:#0f141b; --ink:#e6edf3; --muted:#9db0c5;
+    --good:#2ecc71; --bad:#ff6b6b; --accent:#4da3ff; --accent2:#7c5cff;
+    --radius:16px;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    background:
+      radial-gradient(1200px 800px at 10% -10%, #1a2330 0%, transparent 55%),
+      radial-gradient(900px 700px at 110% 10%, #151a2b 0%, transparent 60%),
+      var(--bg);
+    color:var(--ink);
+  }
+  header{
+    position:sticky; top:0; z-index:5;
+    background:linear-gradient(180deg, rgba(11,15,20,.98), rgba(11,15,20,.7));
+    backdrop-filter: blur(6px);
+    border-bottom:1px solid #1f2a36;
+  }
+  .wrap{max-width:1100px; margin:0 auto; padding:12px 14px;}
+  h1{font-size:1.1rem; margin:0; letter-spacing:.4px;}
+  .grid{
+    display:grid; gap:12px; margin-top:12px;
+    grid-template-columns:1fr;
+  }
+  @media(min-width:900px){
+    .grid.two{grid-template-columns:1fr 1.15fr;}
+  }
+  .card{
+    background:linear-gradient(180deg, var(--panel), var(--panel2));
+    border:1px solid #1f2a36; border-radius:var(--radius);
+    padding:14px; box-shadow:0 8px 20px rgba(0,0,0,.35);
+  }
+  .pill{
+    display:inline-flex; align-items:center; gap:6px;
+    background:#0b121a; border:1px solid #233146; color:#cfe3ff;
+    padding:4px 8px; border-radius:999px; font-size:.8rem; font-weight:700;
+  }
+  .muted{color:var(--muted); font-size:.92rem; line-height:1.45}
+  .btn-row{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;}
+  .btn{
+    border:1px solid #2a3a50; background:#0f1620; color:var(--ink);
+    padding:10px 12px; border-radius:12px; cursor:pointer; font-weight:800;
+    transition:.15s transform ease, .15s border ease, .15s background ease;
+    width:100%;
+  }
+  .btn:hover{border-color:#3d5676}
+  .btn:active{transform:translateY(1px) scale(.99)}
+  .btn-row .btn{width:auto; flex:1 1 140px;}
+
+  /* Draggables */
+  .bank{
+    display:flex; flex-direction:column; gap:8px;
+    min-height:260px; padding:8px; border-radius:12px;
+    background:#0c1118; border:1px dashed #243244;
+  }
+  .item{
+    padding:10px 12px; border-radius:12px; background:#0e1520;
+    border:1px solid #233146; cursor:grab; font-weight:800; user-select:none;
+    display:flex; flex-direction:column; gap:4px;
+    touch-action:none;
+  }
+  .item small{font-weight:600; color:var(--muted)}
+  .item.dragging{opacity:.5}
+
+  /* Diamond area */
+  .diamond-wrap{
+    display:grid; gap:10px;
+    grid-template-columns:1fr;
+  }
+  .diamond-stage{
+    position:relative;
+    background:#0c1118;
+    border:1px dashed #243244;
+    border-radius:14px;
+    padding:10px;
+    min-height:360px;
+  }
+  svg{width:100%; height:auto; display:block;}
+  .zone{
+    position:absolute;
+    transform:translate(-50%,-50%);
+    min-width:110px;
+    max-width:42%;
+    padding:8px 10px;
+    border-radius:12px;
+    background:#0e1622;
+    border:1px solid #233146;
+    text-align:center;
+    font-weight:800;
+    font-size:.95rem;
+  }
+  .zone .zlabel{display:block; font-size:.9rem; margin-bottom:4px;}
+  .zone .zdrop{
+    display:block; font-weight:700; color:var(--muted); font-size:.85rem;
+    padding:6px; border-radius:8px; background:#0b121a; border:1px dashed #223147;
+  }
+  .zone.hover{outline:2px dashed var(--accent); outline-offset:2px;}
+  .zone.filled .zdrop{color:var(--ink); border-style:solid; background:#0f1825;}
+  .zone.correct{border-color:rgba(46,204,113,.9); background:rgba(46,204,113,.08)}
+  .zone.wrong{border-color:rgba(255,107,107,.9); background:rgba(255,107,107,.08)}
+
+  /* Positions for zones (relative to stage) */
+  .zone.top{left:50%; top:9%;}
+  .zone.right{left:90%; top:50%;}
+  .zone.bottom{left:50%; top:91%;}
+  .zone.left{left:10%; top:50%;}
+
+  .scoreline{display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:8px;}
+  .tiny{font-size:.85rem; color:var(--muted)}
+  .progress{
+    height:8px; background:#0b121a; border:1px solid #202b3a; border-radius:999px; overflow:hidden;
+  }
+  .progress > div{
+    height:100%; width:0%;
+    background:linear-gradient(90deg, var(--accent), var(--accent2));
+    transition:width .25s ease;
+  }
+
+  /* Mobile spacing */
+  @media(max-width:480px){
+    .zone{min-width:90px; font-size:.9rem}
+    .zone .zdrop{font-size:.8rem}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <h1>Diamond Intrusion Model (CySA+) — Drag & Drop Quiz</h1>
+  </div>
+</header>
+
+<main class="wrap grid two">
+
+  <!-- LEFT: BANK -->
+  <section class="card">
+    <div class="pill">Drag Bank</div>
+    <p class="muted" style="margin-top:8px">
+      Drag each element into the correct part of the Diamond Model:
+      <b>Adversary, Capability, Infrastructure, Victim</b>.
+    </p>
+
+    <div class="progress"><div id="prog"></div></div>
+    <div class="scoreline">
+      <div class="tiny">Placed: <span id="placedCount">0</span>/4</div>
+      <div class="tiny">Correct: <span id="correctCount">0</span></div>
+    </div>
+
+    <div style="height:8px"></div>
+    <div id="bank" class="bank" aria-label="draggable items"></div>
+
+    <div class="btn-row">
+      <button class="btn" id="checkBtn">Check Answers</button>
+      <button class="btn" id="resetBtn">Reset</button>
+      <button class="btn" id="shuffleBtn">Shuffle</button>
+      <button class="btn" id="hintBtn">Toggle Hints</button>
+    </div>
+
+    <div id="summary" class="muted" style="margin-top:10px"></div>
+  </section>
+
+  <!-- RIGHT: DIAMOND -->
+  <section class="card diamond-wrap">
+    <div class="pill">Diamond Diagram</div>
+    <p class="muted" style="margin-top:8px">
+      Drop each tile into its matching corner/side. You can re-drag to fix mistakes.
+    </p>
+
+    <div class="diamond-stage" id="stage">
+      <!-- Diamond SVG -->
+      <svg viewBox="0 0 400 400" aria-hidden="true">
+        <defs>
+          <linearGradient id="g" x1="0" x2="1">
+            <stop offset="0%" stop-color="#1b2a3f"/>
+            <stop offset="100%" stop-color="#0f2034"/>
+          </linearGradient>
+        </defs>
+        <polygon points="200,25 375,200 200,375 25,200"
+                 fill="url(#g)" stroke="#38547a" stroke-width="3"/>
+        <line x1="200" y1="25" x2="200" y2="375" stroke="#2a3a50" stroke-width="2" opacity="0.7"/>
+        <line x1="25" y1="200" x2="375" y2="200" stroke="#2a3a50" stroke-width="2" opacity="0.7"/>
+      </svg>
+
+      <!-- Drop Zones -->
+      <div class="zone top dropzone" data-zone="capability">
+        <span class="zlabel">Capability</span>
+        <span class="zdrop">Drop here</span>
+      </div>
+
+      <div class="zone right dropzone" data-zone="infrastructure">
+        <span class="zlabel">Infrastructure</span>
+        <span class="zdrop">Drop here</span>
+      </div>
+
+      <div class="zone bottom dropzone" data-zone="victim">
+        <span class="zlabel">Victim</span>
+        <span class="zdrop">Drop here</span>
+      </div>
+
+      <div class="zone left dropzone" data-zone="adversary">
+        <span class="zlabel">Adversary</span>
+        <span class="zdrop">Drop here</span>
+      </div>
+    </div>
+
+    <div class="muted tiny">
+      Remember: Diamond Model links <b>who</b> (adversary), <b>what</b> (capability),
+      <b>how/where</b> (infrastructure), and <b>who they hit</b> (victim).
+    </div>
+  </section>
+
+</main>
+
+<script>
+/* =========================
+   DATA
+========================= */
+const ELEMENTS = [
+  {
+    id:"adversary",
+    title:"Adversary",
+    hint:"The attacker / threat actor",
+    example:"APT group, cybercriminal, insider"
+  },
+  {
+    id:"capability",
+    title:"Capability",
+    hint:"Tools & techniques used",
+    example:"Malware, exploit, phishing kit, TTPs"
+  },
+  {
+    id:"infrastructure",
+    title:"Infrastructure",
+    hint:"Systems/resources used to deliver capability",
+    example:"C2 servers, botnets, domains, IPs"
+  },
+  {
+    id:"victim",
+    title:"Victim",
+    hint:"Targeted entity/person/system",
+    example:"Org, user, device, sector"
+  }
+];
+
+const shuffle = (arr) => {
+  const a = arr.slice();
+  for (let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+};
+const el = (q)=>document.querySelector(q);
+
+let order = shuffle(ELEMENTS);
+let placed = {}; // zoneId -> elementId
+let hintsOn = false;
+
+/* =========================
+   RENDER BANK + ZONES
+========================= */
+const bank = el("#bank");
+const zones = [...document.querySelectorAll(".dropzone")];
+
+function renderBank(){
+  bank.innerHTML="";
+  order.forEach(e=>{
+    const d = document.createElement("div");
+    d.className="item";
+    d.draggable=true;
+    d.dataset.itemId=e.id;
+    d.innerHTML = `
+      <div>${e.title}</div>
+      <small class="hint" style="display:${hintsOn?'block':'none'}">
+        Hint: ${e.hint}<br/>Example: ${e.example}
+      </small>
+    `;
+    // desktop drag
+    d.addEventListener("dragstart",(ev)=>{
+      ev.dataTransfer.setData("text/plain", e.id);
+      d.classList.add("dragging");
+    });
+    d.addEventListener("dragend",()=>d.classList.remove("dragging"));
+
+    enableTouchDrag(d);
+    bank.appendChild(d);
+  });
+}
+
+function resetZonesVisual(){
+  zones.forEach(z=>{
+    z.classList.remove("hover","filled","correct","wrong");
+    z.querySelector(".zdrop").textContent="Drop here";
+  });
+}
+
+/* =========================
+   DROP LOGIC
+========================= */
+zones.forEach(z=>{
+  z.addEventListener("dragover",(e)=>{e.preventDefault(); z.classList.add("hover");});
+  z.addEventListener("dragleave",()=>z.classList.remove("hover"));
+  z.addEventListener("drop",(e)=>{
+    e.preventDefault();
+    z.classList.remove("hover");
+    const itemId = e.dataTransfer.getData("text/plain");
+    placeItem(z, itemId);
+  });
+});
+
+function placeItem(zone, itemId){
+  const zoneId = zone.dataset.zone;
+
+  // If item was placed elsewhere, clear it there
+  for(const zId in placed){
+    if(placed[zId] === itemId){
+      const oldZone = zones.find(x=>x.dataset.zone===zId);
+      if(oldZone){
+        oldZone.classList.remove("filled","correct","wrong");
+        oldZone.querySelector(".zdrop").textContent="Drop here";
+      }
+      delete placed[zId];
+    }
+  }
+
+  placed[zoneId] = itemId;
+  zone.classList.add("filled");
+  const itemObj = ELEMENTS.find(x=>x.id===itemId);
+  zone.querySelector(".zdrop").textContent=itemObj.title;
+
+  updateProgress();
+}
+
+function updateProgress(){
+  const placedCount = Object.keys(placed).length;
+  el("#placedCount").textContent = placedCount;
+  el("#prog").style.width = (placedCount/4*100).toFixed(0)+"%";
+}
+
+/* =========================
+   CHECK / RESET / SHUFFLE / HINTS
+========================= */
+el("#checkBtn").addEventListener("click", ()=>{
+  let correct = 0;
+  zones.forEach(z=>{
+    const zoneId = z.dataset.zone;
+    const got = placed[zoneId];
+    z.classList.remove("correct","wrong");
+    if(!got) return;
+    if(got === zoneId){
+      z.classList.add("correct");
+      correct++;
+    } else {
+      z.classList.add("wrong");
+    }
+  });
+  el("#correctCount").textContent = correct;
+
+  const summary = el("#summary");
+  if(correct === 4){
+    summary.innerHTML = `<b style="color:var(--good)">Perfect. Diamond model elements locked in.</b>`;
+  } else {
+    summary.innerHTML = `You got <b>${correct}/4</b>. Fix the red zones and check again.`;
+  }
+});
+
+el("#resetBtn").addEventListener("click", ()=>{
+  placed = {};
+  resetZonesVisual();
+  updateProgress();
+  el("#correctCount").textContent=0;
+  el("#summary").textContent="";
+});
+
+el("#shuffleBtn").addEventListener("click", ()=>{
+  order = shuffle(ELEMENTS);
+  placed = {};
+  renderBank();
+  resetZonesVisual();
+  updateProgress();
+  el("#correctCount").textContent=0;
+  el("#summary").textContent="";
+});
+
+el("#hintBtn").addEventListener("click", ()=>{
+  hintsOn = !hintsOn;
+  renderBank();
+});
+
+/* =========================
+   TOUCH DRAG SUPPORT
+========================= */
+function enableTouchDrag(node){
+  let dragging=false, ghost=null, offsetX=0, offsetY=0;
+  node.addEventListener("pointerdown",(e)=>{
+    if(e.pointerType==="mouse") return; // native drag for mouse
+    dragging=true;
+    node.setPointerCapture(e.pointerId);
+
+    const rect=node.getBoundingClientRect();
+    offsetX=e.clientX-rect.left;
+    offsetY=e.clientY-rect.top;
+
+    ghost=node.cloneNode(true);
+    ghost.style.position="fixed";
+    ghost.style.left=rect.left+"px";
+    ghost.style.top=rect.top+"px";
+    ghost.style.width=rect.width+"px";
+    ghost.style.opacity="0.95";
+    ghost.style.zIndex="9999";
+    ghost.style.pointerEvents="none";
+    document.body.appendChild(ghost);
+    node.style.opacity="0.4";
+  });
+
+  node.addEventListener("pointermove",(e)=>{
+    if(!dragging||!ghost) return;
+    ghost.style.left=(e.clientX-offsetX)+"px";
+    ghost.style.top=(e.clientY-offsetY)+"px";
+
+    zones.forEach(z=>z.classList.remove("hover"));
+    const over=document.elementFromPoint(e.clientX,e.clientY);
+    const zone=over?.closest?.(".dropzone");
+    if(zone) zone.classList.add("hover");
+  });
+
+  node.addEventListener("pointerup",(e)=>{
+    if(!dragging) return;
+    dragging=false;
+
+    zones.forEach(z=>z.classList.remove("hover"));
+    const over=document.elementFromPoint(e.clientX,e.clientY);
+    const zone=over?.closest?.(".dropzone");
+    if(zone) placeItem(zone, node.dataset.itemId);
+
+    node.style.opacity="1";
+    ghost?.remove(); ghost=null;
+  });
+
+  node.addEventListener("pointercancel",()=>{
+    dragging=false; node.style.opacity="1"; ghost?.remove(); ghost=null;
+  });
+}
+
+/* =========================
+   INIT
+========================= */
+renderBank();
+resetZonesVisual();
+updateProgress();
+</script>
+
+</body>
+</html>
