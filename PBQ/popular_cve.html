@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>CySA+ CVE Focus Quiz + Drag/Drop Match</title>
+<style>
+  :root{
+    --bg:#0b0f14; --panel:#141a22; --panel2:#0f141b; --ink:#e6edf3; --muted:#9db0c5;
+    --good:#2ecc71; --bad:#ff6b6b; --accent:#4da3ff; --accent2:#7c5cff; --warn:#f7c948;
+    --radius:16px;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    background:
+      radial-gradient(1200px 800px at 10% -10%, #1a2330 0%, transparent 55%),
+      radial-gradient(900px 700px at 110% 10%, #151a2b 0%, transparent 60%),
+      var(--bg);
+    color:var(--ink);
+  }
+  header{
+    position:sticky; top:0; z-index:5;
+    background:linear-gradient(180deg, rgba(11,15,20,.98), rgba(11,15,20,.7));
+    backdrop-filter: blur(6px);
+    border-bottom:1px solid #1f2a36;
+  }
+  .wrap{max-width:1100px; margin:0 auto; padding:12px 14px;}
+  .title{
+    display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:space-between;
+  }
+  h1{font-size:1.1rem; margin:0; letter-spacing:.4px;}
+  .tabs{display:flex; gap:8px; flex-wrap:wrap;}
+  .tab{
+    border:1px solid #243244; background:#0e131a; color:var(--ink);
+    padding:8px 12px; border-radius:999px; cursor:pointer; font-weight:600; font-size:.9rem;
+    transition:.15s transform ease, .15s background ease, .15s border ease;
+  }
+  .tab.active{background:linear-gradient(90deg, #162235, #101a29); border-color:#38547a; transform:translateY(-1px);}
+  .tab:active{transform:translateY(1px) scale(.98);}
+  .grid{
+    display:grid; gap:12px; margin-top:12px;
+    grid-template-columns:1fr;
+  }
+  @media(min-width:900px){
+    .grid.two{grid-template-columns:1.1fr .9fr;}
+  }
+  .card{
+    background:linear-gradient(180deg, var(--panel), var(--panel2));
+    border:1px solid #1f2a36; border-radius:var(--radius);
+    padding:14px; box-shadow:0 8px 20px rgba(0,0,0,.35);
+  }
+  .muted{color:var(--muted); font-size:.92rem}
+  .btn{
+    border:1px solid #2a3a50; background:#0f1620; color:var(--ink);
+    padding:10px 12px; border-radius:12px; cursor:pointer; font-weight:700;
+    transition:.15s transform ease, .15s border ease, .15s background ease;
+    width:100%;
+  }
+  .btn:hover{border-color:#3d5676}
+  .btn:active{transform:translateY(1px) scale(.99)}
+  .btn-row{display:flex; gap:8px; flex-wrap:wrap;}
+  .btn-row .btn{width:auto; flex:1 1 150px;}
+  .pill{
+    display:inline-flex; align-items:center; gap:6px;
+    background:#0b121a; border:1px solid #233146; color:#cfe3ff;
+    padding:4px 8px; border-radius:999px; font-size:.8rem; font-weight:700;
+  }
+  .progress{
+    height:8px; background:#0b121a; border:1px solid #202b3a; border-radius:999px; overflow:hidden;
+  }
+  .progress > div{
+    height:100%; width:0%;
+    background:linear-gradient(90deg, var(--accent), var(--accent2));
+    transition:width .25s ease;
+  }
+
+  /* MCQ */
+  .q-title{font-size:1.05rem; margin:0 0 6px 0; font-weight:800}
+  .q-box{
+    background:#0c1118; border:1px dashed #243244; padding:12px; border-radius:12px; margin-top:8px;
+  }
+  .choices{display:grid; gap:8px; margin-top:10px;}
+  .choice{
+    text-align:left; padding:10px 12px; border-radius:12px;
+    border:1px solid #233146; background:#0e1520; cursor:pointer; font-weight:600;
+  }
+  .choice.correct{border-color:rgba(46,204,113,.9); background:rgba(46,204,113,.1)}
+  .choice.wrong{border-color:rgba(255,107,107,.9); background:rgba(255,107,107,.1)}
+  .feedback{
+    margin-top:10px; font-weight:800; padding:10px 12px; border-radius:12px; display:none;
+  }
+  .feedback.good{background:rgba(46,204,113,.12); border:1px solid rgba(46,204,113,.6); display:block;}
+  .feedback.bad{background:rgba(255,107,107,.12); border:1px solid rgba(255,107,107,.6); display:block;}
+  .mcq-footer{display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;}
+
+  /* Drag/Drop matching */
+  .match-wrap{display:grid; gap:12px; grid-template-columns:1fr;}
+  @media(min-width:900px){
+    .match-wrap{grid-template-columns:1fr 1fr;}
+  }
+  .list{
+    display:flex; flex-direction:column; gap:8px;
+    min-height:260px; padding:8px; border-radius:12px;
+    background:#0c1118; border:1px dashed #243244;
+  }
+  .item{
+    padding:10px 12px; border-radius:12px; background:#0e1520;
+    border:1px solid #233146; cursor:grab; font-weight:700; user-select:none;
+    display:flex; justify-content:space-between; gap:8px; align-items:center;
+    touch-action:none;
+  }
+  .item small{font-weight:600; color:var(--muted)}
+  .dropzone{
+    padding:10px 12px; border-radius:12px; background:#0e1622;
+    border:1px solid #233146; min-height:60px;
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+  }
+  .dropzone.hover{outline:2px dashed var(--accent); outline-offset:2px;}
+  .dz-left{font-weight:800}
+  .dz-right{color:var(--muted); font-weight:600}
+  .dz-filled .dz-right{color:var(--ink); font-weight:800;}
+  .dz-correct{border-color:rgba(46,204,113,.9); background:rgba(46,204,113,.08)}
+  .dz-wrong{border-color:rgba(255,107,107,.9); background:rgba(255,107,107,.08)}
+  .scoreline{display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:8px;}
+  .tiny{font-size:.85rem; color:var(--muted)}
+
+  /* Utility */
+  .hidden{display:none!important;}
+  .center{display:flex; align-items:center; justify-content:center;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap title">
+    <h1>CySA+ CVE Must-Know Set — Quiz & Match</h1>
+    <div class="tabs">
+      <button class="tab active" id="tab-mcq">Multiple Choice</button>
+      <button class="tab" id="tab-match">Drag & Drop Match</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- MULTIPLE CHOICE MODE -->
+  <section id="mcq-section" class="grid two">
+    <div class="card">
+      <div class="pill">MCQ Mode</div>
+      <div style="height:8px"></div>
+
+      <div class="progress"><div id="mcq-progress"></div></div>
+      <div class="scoreline">
+        <div class="tiny"><span id="mcq-count">0</span>/<span id="mcq-total">0</span> questions</div>
+        <div class="tiny">Score: <span id="mcq-score">0</span></div>
+      </div>
+
+      <div id="mcq-card" class="q-box" aria-live="polite"></div>
+
+      <div class="mcq-footer">
+        <button class="btn" id="mcq-next">Next</button>
+        <button class="btn" id="mcq-skip">Skip</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="pill">Study Notes (quick)</div>
+      <ul class="muted" id="mcq-notes" style="margin-top:8px; line-height:1.45"></ul>
+      <hr style="border:0; border-top:1px solid #233146; margin:12px 0;">
+      <div class="btn-row">
+        <button class="btn" id="mcq-restart">Restart MCQ</button>
+        <button class="btn" id="mcq-shuffle">Shuffle Questions</button>
+      </div>
+      <p class="tiny" style="margin-top:10px">
+        Tip: On CySA+, focus on what service/protocol is affected and what real-world campaign used it.
+      </p>
+    </div>
+  </section>
+
+  <!-- MATCHING MODE -->
+  <section id="match-section" class="hidden">
+    <div class="grid two">
+      <div class="card">
+        <div class="pill">Drag & Drop Matching</div>
+        <p class="muted" style="margin-top:8px">
+          Drag a CVE/name from the left into the matching definition on the right.
+          Works on mouse or touch.
+        </p>
+        <div class="progress"><div id="match-progress"></div></div>
+        <div class="scoreline">
+          <div class="tiny">Matched: <span id="match-done">0</span>/<span id="match-total">0</span></div>
+          <div class="tiny">Correct: <span id="match-correct">0</span></div>
+        </div>
+        <div style="height:8px"></div>
+        <div class="match-wrap">
+          <div>
+            <h3 class="q-title" style="font-size:1rem">CVE / Vulnerability</h3>
+            <div id="cve-list" class="list" aria-label="CVE items"></div>
+          </div>
+          <div>
+            <h3 class="q-title" style="font-size:1rem">Definition (drop targets)</h3>
+            <div id="def-list" class="list" aria-label="Definition drop zones"></div>
+          </div>
+        </div>
+
+        <div style="height:10px"></div>
+        <div class="btn-row">
+          <button class="btn" id="match-check">Check Answers</button>
+          <button class="btn" id="match-reset">Reset Match</button>
+          <button class="btn" id="match-shuffle">Shuffle Match</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="pill">Legend</div>
+        <ul class="muted" style="margin-top:8px; line-height:1.5">
+          <li><b>Green border</b> = correct match</li>
+          <li><b>Red border</b> = incorrect match</li>
+          <li>You can re-drag any item to fix it.</li>
+        </ul>
+        <hr style="border:0; border-top:1px solid #233146; margin:12px 0;">
+        <div id="match-summary" class="muted"></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+/* =======================
+   DATA
+======================= */
+const CVES = [
+  {
+    id:"cve-2017-0144",
+    label:"CVE-2017-0144 — EternalBlue",
+    short:"EternalBlue",
+    def:"SMBv1 remote code execution in Windows; exploited by WannaCry/NotPetya.",
+    tags:["SMB","wormable","Windows","RCE"]
+  },
+  {
+    id:"cve-2019-0708",
+    label:"CVE-2019-0708 — BlueKeep",
+    short:"BlueKeep",
+    def:"Pre-auth RCE in RDP on legacy Windows; wormable over port 3389.",
+    tags:["RDP","wormable","Windows","RCE"]
+  },
+  {
+    id:"cve-2021-44228",
+    label:"CVE-2021-44228 — Log4Shell",
+    short:"Log4Shell",
+    def:"Log4j JNDI injection leading to RCE in Java apps and cloud services.",
+    tags:["Log4j","JNDI","Java","RCE"]
+  },
+  {
+    id:"cve-2014-6271",
+    label:"CVE-2014-6271 — Shellshock",
+    short:"Shellshock",
+    def:"Bash env var injection allowing command execution, often via CGI.",
+    tags:["Bash","CGI","injection","RCE"]
+  },
+  {
+    id:"cve-2014-0160",
+    label:"CVE-2014-0160 — Heartbleed",
+    short:"Heartbleed",
+    def:"OpenSSL heartbeat bug causing sensitive memory disclosure from TLS.",
+    tags:["OpenSSL","TLS","info disclosure"]
+  },
+  {
+    id:"cve-2017-5638",
+    label:"CVE-2017-5638 — Apache Struts (Equifax)",
+    short:"Struts OGNL",
+    def:"Apache Struts OGNL injection → RCE; used in Equifax breach.",
+    tags:["Struts","OGNL","web","RCE"]
+  },
+  {
+    id:"cve-2020-1472",
+    label:"CVE-2020-1472 — Zerologon",
+    short:"Zerologon",
+    def:"Netlogon cryptographic flaw enabling domain admin takeover.",
+    tags:["Netlogon","AD","priv esc"]
+  },
+  {
+    id:"cve-2022-30190",
+    label:"CVE-2022-30190 — Follina MSDT",
+    short:"Follina",
+    def:"MSDT protocol abuse via Office docs causing RCE without macros.",
+    tags:["MSDT","Office","RCE"]
+  },
+  {
+    id:"cve-2016-5195",
+    label:"CVE-2016-5195 — Dirty COW",
+    short:"Dirty COW",
+    def:"Linux privilege escalation via copy-on-write race condition.",
+    tags:["Linux","LPE","race condition"]
+  },
+  {
+    id:"cve-2015-3456",
+    label:"CVE-2015-3456 — VENOM",
+    short:"VENOM",
+    def:"QEMU virtual floppy controller bug leading to VM escape.",
+    tags:["QEMU","VM escape","hypervisor"]
+  },
+];
+
+/* =======================
+   HELPERS
+======================= */
+const shuffle = (arr) => {
+  const a = arr.slice();
+  for (let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+};
+const el = (q)=>document.querySelector(q);
+
+/* =======================
+   TABS
+======================= */
+const tabMcq = el("#tab-mcq");
+const tabMatch = el("#tab-match");
+const mcqSection = el("#mcq-section");
+const matchSection = el("#match-section");
+
+tabMcq.addEventListener("click", ()=>{
+  tabMcq.classList.add("active");
+  tabMatch.classList.remove("active");
+  mcqSection.classList.remove("hidden");
+  matchSection.classList.add("hidden");
+  window.scrollTo({top:0, behavior:"smooth"});
+});
+tabMatch.addEventListener("click", ()=>{
+  tabMatch.classList.add("active");
+  tabMcq.classList.remove("active");
+  matchSection.classList.remove("hidden");
+  mcqSection.classList.add("hidden");
+  window.scrollTo({top:0, behavior:"smooth"});
+});
+
+/* =======================
+   MCQ MODE
+======================= */
+let mcqOrder = shuffle(CVES);
+let mcqIndex = 0;
+let mcqScore = 0;
+let mcqAnswered = false;
+
+const mcqTotal = el("#mcq-total");
+const mcqCount = el("#mcq-count");
+const mcqScoreEl = el("#mcq-score");
+const mcqProgress = el("#mcq-progress");
+const mcqCard = el("#mcq-card");
+const notesList = el("#mcq-notes");
+
+mcqTotal.textContent = CVES.length;
+
+function renderNotes(){
+  notesList.innerHTML = "";
+  mcqOrder[mcqIndex].tags.forEach(t=>{
+    const li = document.createElement("li");
+    li.textContent = t;
+    notesList.appendChild(li);
+  });
+}
+
+function buildChoices(correctItem){
+  // choices are the vulnerability names (short)
+  const wrongs = shuffle(CVES.filter(x=>x.id!==correctItem.id)).slice(0,3);
+  const opts = shuffle([correctItem, ...wrongs]);
+  return opts;
+}
+
+function renderMcq(){
+  mcqAnswered = false;
+  const item = mcqOrder[mcqIndex];
+  const choices = buildChoices(item);
+
+  mcqCount.textContent = mcqIndex+1;
+  mcqScoreEl.textContent = mcqScore;
+  mcqProgress.style.width = ((mcqIndex)/CVES.length*100).toFixed(0)+"%";
+
+  mcqCard.innerHTML = `
+    <div class="q-title">Which CVE is described below?</div>
+    <div class="muted">${item.def}</div>
+    <div class="choices" id="choices"></div>
+    <div id="feedback" class="feedback"></div>
+  `;
+  renderNotes();
+  const choicesWrap = el("#choices");
+  const feedback = el("#feedback");
+
+  choices.forEach(opt=>{
+    const b = document.createElement("button");
+    b.className = "choice";
+    b.innerHTML = `<div>${opt.label}</div>`;
+    b.addEventListener("click", ()=>{
+      if(mcqAnswered) return;
+      mcqAnswered = true;
+      if(opt.id === item.id){
+        b.classList.add("correct");
+        mcqScore++;
+        feedback.className="feedback good";
+        feedback.textContent="Correct. Lock it in.";
+      }else{
+        b.classList.add("wrong");
+        // highlight correct
+        [...choicesWrap.children].forEach(ch=>{
+          if(ch.textContent.includes(item.label)) ch.classList.add("correct");
+        });
+        feedback.className="feedback bad";
+        feedback.textContent=`Not quite. Correct answer: ${item.label}`;
+      }
+      mcqScoreEl.textContent = mcqScore;
+      mcqProgress.style.width = (((mcqIndex+1)/CVES.length)*100).toFixed(0)+"%";
+    });
+    choicesWrap.appendChild(b);
+  });
+}
+
+el("#mcq-next").addEventListener("click", ()=>{
+  if(mcqIndex < mcqOrder.length-1){
+    mcqIndex++;
+    renderMcq();
+  }else{
+    showMcqEnd();
+  }
+});
+el("#mcq-skip").addEventListener("click", ()=>{
+  if(mcqIndex < mcqOrder.length-1){
+    mcqIndex++;
+    renderMcq();
+  }else{
+    showMcqEnd();
+  }
+});
+el("#mcq-restart").addEventListener("click", ()=>{
+  mcqOrder = shuffle(CVES);
+  mcqIndex = 0; mcqScore = 0;
+  renderMcq();
+});
+el("#mcq-shuffle").addEventListener("click", ()=>{
+  mcqOrder = shuffle(mcqOrder);
+  mcqIndex = 0; mcqScore = 0;
+  renderMcq();
+});
+
+function showMcqEnd(){
+  mcqCard.innerHTML = `
+    <div class="center" style="flex-direction:column; gap:8px; padding:12px;">
+      <div class="q-title">MCQ Complete 🎉</div>
+      <div class="muted">Score: <b>${mcqScore}/${CVES.length}</b></div>
+      <button class="btn" id="go-match">Try Drag & Drop Match</button>
+      <button class="btn" id="restart-mcq-2">Restart MCQ</button>
+    </div>
+  `;
+  el("#go-match").addEventListener("click", ()=>tabMatch.click());
+  el("#restart-mcq-2").addEventListener("click", ()=>{
+    mcqOrder = shuffle(CVES);
+    mcqIndex = 0; mcqScore = 0;
+    renderMcq();
+  });
+}
+
+/* =======================
+   MATCH MODE (Drag & Drop)
+======================= */
+let matchCveOrder = shuffle(CVES);
+let matchDefOrder = shuffle(CVES); // drop zones based on defs
+const cveList = el("#cve-list");
+const defList = el("#def-list");
+const matchTotal = el("#match-total");
+const matchDone = el("#match-done");
+const matchCorrect = el("#match-correct");
+const matchProgress = el("#match-progress");
+const matchSummary = el("#match-summary");
+
+matchTotal.textContent = CVES.length;
+
+let placed = {};  // defId -> cveId
+
+function renderMatch(){
+  placed = {};
+  cveList.innerHTML = "";
+  defList.innerHTML = "";
+  matchCorrect.textContent = "0";
+  matchDone.textContent = "0";
+  matchProgress.style.width = "0%";
+  matchSummary.textContent = "";
+
+  // CVE draggable items
+  matchCveOrder.forEach(item=>{
+    const d = document.createElement("div");
+    d.className="item";
+    d.draggable=true;
+    d.dataset.cveId=item.id;
+    d.innerHTML = `<span>${item.label}</span>`;
+    // drag events
+    d.addEventListener("dragstart",(e)=>{
+      e.dataTransfer.setData("text/plain", item.id);
+      d.style.opacity = "0.6";
+    });
+    d.addEventListener("dragend",()=>{
+      d.style.opacity = "1";
+    });
+
+    // touch support (pointer)
+    enableTouchDrag(d);
+    cveList.appendChild(d);
+  });
+
+  // definition drop zones
+  matchDefOrder.forEach(item=>{
+    const z = document.createElement("div");
+    z.className="dropzone";
+    z.dataset.defId=item.id;
+    z.innerHTML = `
+      <div class="dz-left">${item.def}</div>
+      <div class="dz-right">Drop CVE here</div>
+    `;
+    // allow drop
+    z.addEventListener("dragover",(e)=>{e.preventDefault(); z.classList.add("hover");});
+    z.addEventListener("dragleave",()=>z.classList.remove("hover"));
+    z.addEventListener("drop",(e)=>{
+      e.preventDefault();
+      z.classList.remove("hover");
+      const cveId = e.dataTransfer.getData("text/plain");
+      placeInZone(z, cveId);
+    });
+    defList.appendChild(z);
+  });
+}
+
+function placeInZone(zone, cveId){
+  const cveItem = matchCveOrder.find(x=>x.id===cveId);
+  if(!cveItem) return;
+
+  // If this cve was already placed elsewhere, remove it there first
+  for(const defId in placed){
+    if(placed[defId] === cveId){
+      const oldZone = [...defList.children].find(z=>z.dataset.defId===defId);
+      if(oldZone){
+        oldZone.classList.remove("dz-filled","dz-correct","dz-wrong");
+        oldZone.querySelector(".dz-right").textContent = "Drop CVE here";
+      }
+      delete placed[defId];
+    }
+  }
+
+  const defId = zone.dataset.defId;
+  placed[defId] = cveId;
+  zone.classList.add("dz-filled");
+  zone.querySelector(".dz-right").textContent = cveItem.label;
+
+  updateMatchProgress();
+}
+
+function updateMatchProgress(){
+  const done = Object.keys(placed).length;
+  matchDone.textContent = done;
+  matchProgress.style.width = ((done/CVES.length)*100).toFixed(0)+"%";
+}
+
+el("#match-check").addEventListener("click", ()=>{
+  let correct = 0;
+  [...defList.children].forEach(zone=>{
+    const defId = zone.dataset.defId;
+    const got = placed[defId];
+    zone.classList.remove("dz-correct","dz-wrong");
+    if(!got) return;
+    if(got === defId){
+      zone.classList.add("dz-correct");
+      correct++;
+    }else{
+      zone.classList.add("dz-wrong");
+    }
+  });
+  matchCorrect.textContent = correct;
+
+  if(correct === CVES.length){
+    matchSummary.innerHTML = `<b style="color:var(--good)">Perfect score. You're dialed in.</b>`;
+  }else{
+    matchSummary.innerHTML = `You got <b>${correct}/${CVES.length}</b>. Fix the red ones and check again.`;
+  }
+});
+
+el("#match-reset").addEventListener("click", ()=>{
+  renderMatch();
+});
+el("#match-shuffle").addEventListener("click", ()=>{
+  matchCveOrder = shuffle(CVES);
+  matchDefOrder = shuffle(CVES);
+  renderMatch();
+});
+
+/* =======================
+   Touch Drag Support
+   Simple pointer-based drag for mobile
+======================= */
+function enableTouchDrag(node){
+  let dragging=false, ghost=null, startX=0, startY=0, offsetX=0, offsetY=0;
+
+  node.addEventListener("pointerdown", (e)=>{
+    if(e.pointerType === "mouse") return; // mouse uses native drag
+    dragging = true;
+    node.setPointerCapture(e.pointerId);
+    startX = e.clientX; startY = e.clientY;
+
+    const rect=node.getBoundingClientRect();
+    offsetX = startX-rect.left;
+    offsetY = startY-rect.top;
+
+    ghost = node.cloneNode(true);
+    ghost.style.position="fixed";
+    ghost.style.left=rect.left+"px";
+    ghost.style.top=rect.top+"px";
+    ghost.style.width=rect.width+"px";
+    ghost.style.opacity="0.9";
+    ghost.style.zIndex="9999";
+    ghost.style.pointerEvents="none";
+    ghost.style.cursor="grabbing";
+    document.body.appendChild(ghost);
+    node.style.opacity="0.4";
+  });
+
+  node.addEventListener("pointermove", (e)=>{
+    if(!dragging || !ghost) return;
+    ghost.style.left=(e.clientX-offsetX)+"px";
+    ghost.style.top=(e.clientY-offsetY)+"px";
+
+    // highlight dropzone under pointer
+    [...defList.children].forEach(z=>z.classList.remove("hover"));
+    const over = document.elementFromPoint(e.clientX, e.clientY);
+    const zone = over?.closest?.(".dropzone");
+    if(zone) zone.classList.add("hover");
+  });
+
+  node.addEventListener("pointerup",(e)=>{
+    if(!dragging) return;
+    dragging=false;
+
+    // find drop zone under pointer
+    [...defList.children].forEach(z=>z.classList.remove("hover"));
+    const over = document.elementFromPoint(e.clientX, e.clientY);
+    const zone = over?.closest?.(".dropzone");
+    if(zone){
+      placeInZone(zone, node.dataset.cveId);
+    }
+
+    node.style.opacity="1";
+    ghost?.remove();
+    ghost=null;
+  });
+
+  node.addEventListener("pointercancel", ()=>{
+    dragging=false; node.style.opacity="1"; ghost?.remove(); ghost=null;
+  });
+}
+
+/* =======================
+   INIT
+======================= */
+renderMcq();
+renderMatch();
+</script>
+</body>
+</html>
