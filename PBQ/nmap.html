@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nmap Flags — Drag & Drop CySA+ Quiz</title>
+<style>
+  :root{
+    --bg:#0d1117; --card:#161b22; --ink:#e6edf3;
+    --good:#2ecc71; --bad:#e74c3c; --muted:#9da5b4;
+    --radius:14px;
+  }
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:Arial, sans-serif;
+    margin:0; padding:20px;
+  }
+  h2{text-align:center; margin-bottom:20px;}
+
+  .container{
+    display:flex;
+    gap:20px;
+    flex-wrap:wrap;
+    justify-content:center;
+  }
+
+  .box, .target{
+    background:var(--card);
+    padding:12px;
+    border-radius:var(--radius);
+    min-width:140px;
+    text-align:center;
+    margin:10px;
+  }
+
+  .box{
+    border:2px solid var(--muted);
+    cursor:grab;
+  }
+
+  .target{
+    border:2px dashed var(--muted);
+    min-height:55px;
+  }
+
+  .correct{border-color:var(--good)!important;}
+  .wrong{border-color:var(--bad)!important;}
+</style>
+</head>
+<body>
+
+<h2>Nmap Flags — Drag & Drop Matching (CySA+)</h2>
+
+<div class="container" id="definitions"></div>
+<hr style="margin:25px 0; border-color:#333;">
+<div class="container" id="commands"></div>
+
+<script>
+// Nmap knowledge for CySA+
+const data = [
+  {cmd:"-O", desc:"OS detection"},
+  {cmd:"-sS", desc:"SYN stealth scan"},
+  {cmd:"-sT", desc:"TCP connect scan"},
+  {cmd:"-sU", desc:"UDP scan"},
+  {cmd:"-sV", desc:"Version detection"},
+  {cmd:"-A", desc:"Aggressive scan (OS + version + scripts + traceroute)"},
+  {cmd:"-sC", desc:"Default NSE scripts"},
+  {cmd:"-sn", desc:"Ping scan (host discovery only)"},
+  {cmd:"-Pn", desc:"Skip host discovery (treat hosts as online)"},
+  {cmd:"-p-", desc:"Scan all 65,535 ports"},
+  {cmd:"-T4", desc:"Faster timing template"},
+  {cmd:"-T0", desc:"Slowest scan for IDS evasion"},
+  {cmd:"-D RND:10", desc:"Decoy scan"},
+  {cmd:"-S <IP>", desc:"Spoof source IP"},
+  {cmd:"--data-length 50", desc:"Add random padding to packets"},
+  {cmd:"--f", desc:"Fragment packets for evasion"},
+];
+
+// Shuffle helper
+function shuffle(arr){
+  return arr.sort(()=>Math.random()-0.5);
+}
+
+const defs = document.getElementById("definitions");
+const cmds = document.getElementById("commands");
+
+// Render targets (definitions)
+shuffle(data).forEach((item,i)=>{
+  let div = document.createElement("div");
+  div.className = "target";
+  div.dataset.answer = item.cmd;
+  div.textContent = item.desc;
+  div.addEventListener("dragover", e=>e.preventDefault());
+  div.addEventListener("drop", dropped);
+  defs.appendChild(div);
+});
+
+// Render draggable commands
+shuffle(data).forEach((item,i)=>{
+  let div = document.createElement("div");
+  div.className = "box";
+  div.draggable = true;
+  div.id = item.cmd;
+  div.textContent = item.cmd;
+  div.addEventListener("dragstart", dragStart);
+  cmds.appendChild(div);
+});
+
+function dragStart(e){
+  e.dataTransfer.setData("text/plain", e.target.id);
+}
+
+function dropped(e){
+  const draggedId = e.dataTransfer.getData("text/plain");
+  const correct = e.target.dataset.answer;
+
+  if(draggedId === correct){
+    e.target.classList.remove("wrong");
+    e.target.classList.add("correct");
+    e.target.innerHTML = `<strong>${correct}</strong> — ${e.target.textContent}`;
+    document.getElementById(draggedId).remove();
+  } else {
+    e.target.classList.add("wrong");
+    setTimeout(()=>e.target.classList.remove("wrong"), 900);
+  }
+}
+</script>
+</body>
+</html>
