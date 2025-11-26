@@ -2,99 +2,71 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>CySA+ PowerShell Commands — Matching PBQ</title>
+<title>CySA+ PowerShell Matching</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
   :root{
-    --bg:#020712;
-    --card:#0a101c;
-    --card-soft:#111827;
+    --bg:#020617;
+    --card:#0b1120;
     --accent:#38bdf8;
-    --accent2:#a855f7;
     --good:#22c55e;
     --bad:#f97373;
     --ink:#e5e7eb;
     --muted:#9ca3af;
-    --border:#1f2933;
-    --radius:14px;
+    --border:#1f2937;
+    --radius:10px;
   }
 
   *{box-sizing:border-box;margin:0;padding:0}
 
   body{
     font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-    background:radial-gradient(circle at top,#0b1120 0,#020617 55%,#000 100%);
+    background:var(--bg);
     color:var(--ink);
     min-height:100vh;
     display:flex;
     justify-content:center;
-    padding:16px;
+    padding:12px;
   }
 
   .app{
-    max-width:1100px;
+    max-width:900px;
     width:100%;
     margin:auto;
   }
 
   header{
+    margin-bottom:10px;
     text-align:center;
-    margin-bottom:16px;
   }
 
   h1{
-    font-size:1.5rem;
-    margin-bottom:6px;
+    font-size:1.35rem;
+    margin-bottom:4px;
   }
 
   .subtitle{
-    font-size:0.9rem;
+    font-size:0.85rem;
     color:var(--muted);
-  }
-
-  .pill-row{
-    display:flex;
-    flex-wrap:wrap;
-    justify-content:center;
-    gap:8px;
-    margin-top:10px;
-    font-size:0.8rem;
-  }
-
-  .pill{
-    padding:4px 10px;
-    border-radius:999px;
-    background:rgba(148,163,184,0.1);
-    border:1px solid rgba(148,163,184,0.2);
   }
 
   .panel{
-    background:rgba(15,23,42,0.96);
+    background:var(--card);
     border-radius:var(--radius);
     border:1px solid var(--border);
-    padding:14px;
-    box-shadow:0 18px 40px rgba(0,0,0,0.55);
-    backdrop-filter:blur(14px);
+    padding:10px;
   }
 
   .instructions{
-    font-size:0.85rem;
+    font-size:0.8rem;
     color:var(--muted);
-    margin-bottom:10px;
-  }
-
-  .badge{
-    font-size:0.7rem;
-    text-transform:uppercase;
-    letter-spacing:0.08em;
-    color:var(--accent);
-    margin-bottom:4px;
+    margin-bottom:8px;
   }
 
   .grid{
     display:grid;
     grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);
-    gap:12px;
+    gap:10px;
   }
 
   @media (max-width:768px){
@@ -106,33 +78,30 @@
   .column-title{
     font-size:0.8rem;
     color:var(--muted);
-    margin-bottom:6px;
+    margin-bottom:4px;
   }
 
   .descriptions{
     display:flex;
     flex-direction:column;
-    gap:8px;
+    gap:6px;
   }
 
   .dropzone{
-    background:var(--card);
+    background:#020617;
     border-radius:var(--radius);
-    min-height:52px;
-    padding:8px 10px;
-    border:1px dashed rgba(148,163,184,0.55);
+    min-height:50px;
+    padding:6px 8px;
+    border:1px dashed rgba(148,163,184,0.7);
     display:flex;
     align-items:center;
     justify-content:space-between;
     gap:6px;
-    transition:border-color .15s,box-shadow .15s,background .15s,transform .08s;
-    position:relative;
+    font-size:0.8rem;
   }
 
   .dropzone.highlight{
     border-color:var(--accent);
-    box-shadow:0 0 0 1px rgba(56,189,248,0.6);
-    transform:translateY(-1px);
   }
 
   .dropzone.correct{
@@ -146,55 +115,43 @@
   }
 
   .desc-text{
-    font-size:0.82rem;
-    color:var(--ink);
+    flex:1;
   }
 
   .slot-label{
     font-size:0.7rem;
     color:var(--muted);
-  }
-
-  .slot-number{
-    font-weight:600;
-    color:var(--accent2);
+    white-space:nowrap;
+    padding-left:6px;
   }
 
   .bank{
-    background:var(--card-soft);
+    background:#020617;
     border-radius:var(--radius);
-    padding:10px;
+    padding:6px;
     border:1px solid var(--border);
     display:flex;
     flex-wrap:wrap;
-    gap:8px;
-    align-content:flex-start;
-    min-height:70px;
+    gap:6px;
+    min-height:60px;
   }
 
   .cmd-pill{
     user-select:none;
     cursor:grab;
-    padding:6px 10px;
+    padding:5px 8px;
     border-radius:999px;
-    background:linear-gradient(135deg,rgba(56,189,248,0.12),rgba(168,85,247,0.12));
-    border:1px solid rgba(148,163,184,0.5);
+    background:rgba(15,23,42,1);
+    border:1px solid rgba(148,163,184,0.7);
     font-family:"Cascadia Code","Fira Code",ui-monospace,Menlo,Consolas,monospace;
-    font-size:0.8rem;
+    font-size:0.75rem;
     white-space:nowrap;
     max-width:100%;
     overflow-x:auto;
   }
-  .cmd-pill::-webkit-scrollbar{height:3px}
   .cmd-pill:active{cursor:grabbing}
-
-  .cmd-pill.placed{
-    background:rgba(15,23,42,0.9);
-  }
-
-  .cmd-pill.ghost{
-    opacity:0.35;
-  }
+  .cmd-pill.ghost{opacity:0.35}
+  .cmd-pill.placed{background:#020617}
 
   .status-bar{
     display:flex;
@@ -202,102 +159,68 @@
     gap:8px;
     align-items:center;
     justify-content:space-between;
-    margin-top:10px;
+    margin-top:8px;
     font-size:0.8rem;
   }
 
   .buttons{
     display:flex;
-    gap:8px;
+    gap:6px;
     flex-wrap:wrap;
   }
 
   button{
     border-radius:999px;
-    border:1px solid rgba(148,163,184,0.4);
-    background:radial-gradient(circle at top left,rgba(56,189,248,0.18),rgba(15,23,42,1));
+    border:1px solid rgba(148,163,184,0.7);
+    background:#020617;
     color:var(--ink);
-    padding:6px 14px;
+    padding:5px 12px;
     font-size:0.8rem;
     cursor:pointer;
-  }
-  button.secondary{
-    background:rgba(15,23,42,0.8);
   }
   button:active{
     transform:translateY(1px);
   }
 
-  .score{
-    color:var(--muted);
-  }
   .score span{
     color:var(--accent);
     font-weight:600;
-  }
-
-  .hint{
-    color:var(--muted);
-    opacity:0.85;
-  }
-
-  .chip{
-    padding:2px 8px;
-    border-radius:999px;
-    background:rgba(22,163,74,0.1);
-    border:1px solid rgba(34,197,94,0.5);
-    font-size:0.7rem;
   }
 </style>
 </head>
 <body>
 <div class="app">
   <header>
-    <div class="badge">CySA+ Practice PBQ</div>
-    <h1>PowerShell Command Matching</h1>
-    <p class="subtitle">Match each CySA+-relevant task to the correct PowerShell command.</p>
-    <div class="pill-row">
-      <div class="pill">Processes & services</div>
-      <div class="pill">Event logs</div>
-      <div class="pill">Network activity</div>
-      <div class="pill">Execution policy</div>
-      <div class="pill">Hashing & inventory</div>
-    </div>
+    <h1>CySA+ PowerShell Matching</h1>
+    <p class="subtitle">Drag a PowerShell command to the task it performs.</p>
   </header>
 
   <main class="panel">
     <p class="instructions">
-      Drag a <strong>command</strong> chip from the right into the matching <strong>task</strong> slot on the left.
-      Then hit <strong>Check answers</strong>. On mobile, you may have to press and hold briefly to start dragging.
+      Drag a <strong>command</strong> chip from the right to the matching <strong>task</strong> on the left.
+      Tap and hold on mobile to start dragging.
     </p>
 
     <div class="grid">
       <!-- LEFT: DROPZONES -->
       <section>
-        <div class="column-title">Tasks / What you need to do</div>
-        <div id="dropzones" class="descriptions">
-          <!-- Filled by JS -->
-        </div>
+        <div class="column-title">Tasks</div>
+        <div id="dropzones" class="descriptions"></div>
       </section>
 
       <!-- RIGHT: COMMAND BANK -->
       <section>
-        <div class="column-title">PowerShell commands (drag these)</div>
-        <div id="bank" class="bank">
-          <!-- Filled by JS -->
-        </div>
+        <div class="column-title">Commands</div>
+        <div id="bank" class="bank"></div>
       </section>
     </div>
 
     <div class="status-bar">
       <div class="buttons">
-        <button id="checkBtn">Check answers</button>
-        <button id="resetBtn" class="secondary">Reset</button>
+        <button id="checkBtn">Check</button>
+        <button id="resetBtn">Reset</button>
       </div>
       <div class="score" id="scoreText">Score: <span>0 / 0</span></div>
-      <div class="hint">
-        <span class="chip">Tip</span> Think like an analyst: logs → <code>Get-WinEvent</code>, network → <code>Get-Net*</code>, integrity → <code>Get-FileHash</code>.
-      </div>
     </div>
   </main>
 </div>
@@ -327,7 +250,7 @@
     {
       id: "p5",
       task: "Calculate a SHA256 hash for a suspicious executable to compare with threat intel.",
-      cmd: 'Get-FileHash "C:\\Tools\\suspect.exe" -Algorithm SHA256'
+      cmd: 'Get-FileHash "C:\\\\Tools\\\\suspect.exe" -Algorithm SHA256'
     },
     {
       id: "p6",
@@ -401,8 +324,7 @@
     bank.innerHTML = "";
     scoreText.innerHTML = `Score: <span>0 / ${PAIRS.length}</span>`;
 
-    // Build dropzones
-    PAIRS.forEach((pair, idx) => {
+    PAIRS.forEach(pair => {
       const dz = document.createElement("div");
       dz.className = "dropzone";
       dz.dataset.id = pair.id;
@@ -414,14 +336,13 @@
 
       const right = document.createElement("div");
       right.className = "slot-label";
-      right.innerHTML = `Slot <span class="slot-number">${idx+1}</span>`;
+      right.textContent = "Drop here";
 
       dz.appendChild(left);
       dz.appendChild(right);
       dropzonesContainer.appendChild(dz);
     });
 
-    // Build command bank (shuffled)
     const shuffled = shuffle(PAIRS);
     shuffled.forEach(pair => {
       const pill = document.createElement("div");
@@ -469,20 +390,17 @@
         dz.classList.remove("highlight");
         if(!dragged) return;
 
-        // remove any existing pill in this dropzone back to bank
         const existing = dz.querySelector(".cmd-pill");
         if(existing){
           existing.classList.remove("placed");
           bank.appendChild(existing);
         }
 
-        // move dragged pill here
         dragged.classList.add("placed");
         dz.appendChild(dragged);
       });
     });
 
-    // Allow dropping back to bank
     bank.addEventListener("dragover", e => {
       e.preventDefault();
     });
@@ -524,7 +442,6 @@
   checkBtn.addEventListener("click", checkAnswers);
   resetBtn.addEventListener("click", resetAll);
 
-  // init
   buildUI();
 </script>
 </body>
