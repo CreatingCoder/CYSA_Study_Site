@@ -2,19 +2,19 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>CySA+ PowerShell Matching</title>
+<title>CySA+ PowerShell Essentials</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
   :root{
     --bg:#020617;
     --card:#0b1120;
+    --ink:#e5e7eb;
+    --muted:#9ca3af;
     --accent:#38bdf8;
     --good:#22c55e;
     --bad:#f97373;
-    --ink:#e5e7eb;
-    --muted:#9ca3af;
     --border:#1f2937;
-    --radius:10px;
+    --radius:8px;
   }
 
   *{box-sizing:border-box;margin:0;padding:0}
@@ -26,27 +26,27 @@
     min-height:100vh;
     display:flex;
     justify-content:center;
-    padding:12px;
+    padding:10px;
   }
 
   .app{
-    max-width:900px;
+    max-width:800px;
     width:100%;
     margin:auto;
   }
 
   header{
-    margin-bottom:10px;
     text-align:center;
+    margin-bottom:8px;
   }
 
   h1{
-    font-size:1.35rem;
-    margin-bottom:4px;
+    font-size:1.3rem;
+    margin-bottom:2px;
   }
 
   .subtitle{
-    font-size:0.85rem;
+    font-size:0.8rem;
     color:var(--muted);
   }
 
@@ -66,17 +66,15 @@
   .grid{
     display:grid;
     grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);
-    gap:10px;
+    gap:8px;
   }
 
-  @media (max-width:768px){
-    .grid{
-      grid-template-columns:1fr;
-    }
+  @media (max-width:700px){
+    .grid{grid-template-columns:1fr;}
   }
 
   .column-title{
-    font-size:0.8rem;
+    font-size:0.78rem;
     color:var(--muted);
     margin-bottom:4px;
   }
@@ -90,39 +88,25 @@
   .dropzone{
     background:#020617;
     border-radius:var(--radius);
-    min-height:50px;
+    min-height:44px;
     padding:6px 8px;
     border:1px dashed rgba(148,163,184,0.7);
     display:flex;
     align-items:center;
     justify-content:space-between;
     gap:6px;
-    font-size:0.8rem;
+    font-size:0.78rem;
   }
 
-  .dropzone.highlight{
-    border-color:var(--accent);
-  }
+  .dropzone.highlight{border-color:var(--accent);}
+  .dropzone.correct{border-style:solid;border-color:var(--good);}
+  .dropzone.wrong{border-style:solid;border-color:var(--bad);}
 
-  .dropzone.correct{
-    border-style:solid;
-    border-color:var(--good);
-  }
-
-  .dropzone.wrong{
-    border-style:solid;
-    border-color:var(--bad);
-  }
-
-  .desc-text{
-    flex:1;
-  }
-
+  .desc-text{flex:1;}
   .slot-label{
     font-size:0.7rem;
     color:var(--muted);
     white-space:nowrap;
-    padding-left:6px;
   }
 
   .bank{
@@ -133,7 +117,7 @@
     display:flex;
     flex-wrap:wrap;
     gap:6px;
-    min-height:60px;
+    min-height:56px;
   }
 
   .cmd-pill{
@@ -141,8 +125,8 @@
     cursor:grab;
     padding:5px 8px;
     border-radius:999px;
-    background:rgba(15,23,42,1);
-    border:1px solid rgba(148,163,184,0.7);
+    background:#020617;
+    border:1px solid rgba(148,163,184,0.8);
     font-family:"Cascadia Code","Fira Code",ui-monospace,Menlo,Consolas,monospace;
     font-size:0.75rem;
     white-space:nowrap;
@@ -151,36 +135,33 @@
   }
   .cmd-pill:active{cursor:grabbing}
   .cmd-pill.ghost{opacity:0.35}
-  .cmd-pill.placed{background:#020617}
+  .cmd-pill.placed{background:#020617;}
 
   .status-bar{
     display:flex;
-    flex-wrap:wrap;
-    gap:8px;
-    align-items:center;
     justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:6px;
     margin-top:8px;
-    font-size:0.8rem;
+    font-size:0.78rem;
   }
 
   .buttons{
     display:flex;
     gap:6px;
-    flex-wrap:wrap;
   }
 
   button{
     border-radius:999px;
-    border:1px solid rgba(148,163,184,0.7);
+    border:1px solid rgba(148,163,184,0.8);
     background:#020617;
     color:var(--ink);
-    padding:5px 12px;
-    font-size:0.8rem;
+    padding:4px 12px;
+    font-size:0.78rem;
     cursor:pointer;
   }
-  button:active{
-    transform:translateY(1px);
-  }
+  button:active{transform:translateY(1px);}
 
   .score span{
     color:var(--accent);
@@ -191,24 +172,24 @@
 <body>
 <div class="app">
   <header>
-    <h1>CySA+ PowerShell Matching</h1>
-    <p class="subtitle">Drag a PowerShell command to the task it performs.</p>
+    <h1>CySA+ PowerShell Essentials</h1>
+    <p class="subtitle">Match key incident-response tasks to the right PowerShell command.</p>
   </header>
 
   <main class="panel">
     <p class="instructions">
-      Drag a <strong>command</strong> chip from the right to the matching <strong>task</strong> on the left.
-      Tap and hold on mobile to start dragging.
+      Drag a <strong>command</strong> from the right to the matching <strong>task</strong> on the left.
+      (Tap & hold to drag on mobile.)
     </p>
 
     <div class="grid">
-      <!-- LEFT: DROPZONES -->
+      <!-- LEFT: TASKS -->
       <section>
         <div class="column-title">Tasks</div>
         <div id="dropzones" class="descriptions"></div>
       </section>
 
-      <!-- RIGHT: COMMAND BANK -->
+      <!-- RIGHT: COMMANDS -->
       <section>
         <div class="column-title">Commands</div>
         <div id="bank" class="bank"></div>
@@ -226,81 +207,47 @@
 </div>
 
 <script>
+  // Bare-necessity CySA+ PowerShell commands
   const PAIRS = [
     {
       id: "p1",
-      task: "List all running processes on the host to hunt for suspicious activity.",
+      task: "List running processes on a host.",
       cmd: "Get-Process"
     },
     {
       id: "p2",
-      task: "List all Windows services and see which ones are running.",
+      task: "List Windows services and see which are running.",
       cmd: "Get-Service"
     },
     {
       id: "p3",
-      task: "Pull the 20 most recent Security log entries for a quick review.",
+      task: "View recent Security event log entries.",
       cmd: "Get-EventLog -LogName Security -Newest 20"
     },
     {
       id: "p4",
-      task: "Filter Windows event logs to show failed logon attempts (ID 4625).",
-      cmd: 'Get-WinEvent -LogName Security | ? { $_.Id -eq 4625 }'
+      task: "Show failed logon events (ID 4625).",
+      cmd: "Get-WinEvent -LogName Security | ? { $_.Id -eq 4625 }"
     },
     {
       id: "p5",
-      task: "Calculate a SHA256 hash for a suspicious executable to compare with threat intel.",
-      cmd: 'Get-FileHash "C:\\\\Tools\\\\suspect.exe" -Algorithm SHA256'
+      task: "Hash a suspicious file (SHA256).",
+      cmd: 'Get-FileHash "C:\\\\suspect.exe" -Algorithm SHA256'
     },
     {
       id: "p6",
-      task: "View active TCP connections to look for suspicious external IPs.",
+      task: "View active TCP connections.",
       cmd: "Get-NetTCPConnection"
     },
     {
       id: "p7",
-      task: "Review configured Windows firewall rules as part of a host-based assessment.",
-      cmd: "Get-NetFirewallRule"
-    },
-    {
-      id: "p8",
-      task: "List all scheduled tasks to look for persistence mechanisms.",
+      task: "List scheduled tasks (persistence check).",
       cmd: "Get-ScheduledTask"
     },
     {
-      id: "p9",
-      task: "Check the current PowerShell script execution policy on a system.",
+      id: "p8",
+      task: "Check the current PowerShell execution policy.",
       cmd: "Get-ExecutionPolicy"
-    },
-    {
-      id: "p10",
-      task: "Set the PowerShell execution policy so only local scripts and signed remote scripts can run.",
-      cmd: "Set-ExecutionPolicy RemoteSigned"
-    },
-    {
-      id: "p11",
-      task: "Get basic OS and system information from a Windows host.",
-      cmd: "Get-ComputerInfo"
-    },
-    {
-      id: "p12",
-      task: "Display network adapter information (names, status, and MAC addresses).",
-      cmd: "Get-NetAdapter"
-    },
-    {
-      id: "p13",
-      task: "Show configured IP addresses on the system for network triage.",
-      cmd: "Get-NetIPAddress"
-    },
-    {
-      id: "p14",
-      task: "Use PowerShell remoting to run a process listing on a remote server named SERVER1.",
-      cmd: 'Invoke-Command -ComputerName SERVER1 -ScriptBlock { Get-Process }'
-    },
-    {
-      id: "p15",
-      task: "Query WMI for OS details when building a quick inventory for incident scoping.",
-      cmd: "Get-WmiObject Win32_OperatingSystem"
     }
   ];
 
@@ -324,10 +271,10 @@
     bank.innerHTML = "";
     scoreText.innerHTML = `Score: <span>0 / ${PAIRS.length}</span>`;
 
+    // Create task dropzones
     PAIRS.forEach(pair => {
       const dz = document.createElement("div");
       dz.className = "dropzone";
-      dz.dataset.id = pair.id;
       dz.dataset.correctCmd = pair.cmd;
 
       const left = document.createElement("div");
@@ -343,6 +290,7 @@
       dropzonesContainer.appendChild(dz);
     });
 
+    // Command bank (shuffled)
     const shuffled = shuffle(PAIRS);
     shuffled.forEach(pair => {
       const pill = document.createElement("div");
@@ -350,7 +298,6 @@
       pill.textContent = pair.cmd;
       pill.draggable = true;
       pill.dataset.cmd = pair.cmd;
-      pill.id = "cmd-" + pair.id;
       bank.appendChild(pill);
     });
 
@@ -360,7 +307,6 @@
   function wireDnD(){
     const pills = document.querySelectorAll(".cmd-pill");
     const dropzones = document.querySelectorAll(".dropzone");
-
     let dragged = null;
 
     pills.forEach(pill => {
@@ -390,6 +336,7 @@
         dz.classList.remove("highlight");
         if(!dragged) return;
 
+        // If something is already here, send it back to the bank
         const existing = dz.querySelector(".cmd-pill");
         if(existing){
           existing.classList.remove("placed");
@@ -401,10 +348,10 @@
       });
     });
 
+    // Allow dropping back to bank
     bank.addEventListener("dragover", e => {
       e.preventDefault();
     });
-
     bank.addEventListener("drop", e => {
       e.preventDefault();
       if(!dragged) return;
@@ -422,9 +369,7 @@
       const pill = dz.querySelector(".cmd-pill");
       if(!pill) return;
 
-      const expected = dz.dataset.correctCmd;
-      const actual = pill.dataset.cmd;
-      if(expected === actual){
+      if(pill.dataset.cmd === dz.dataset.correctCmd){
         correct++;
         dz.classList.add("correct");
       }else{
