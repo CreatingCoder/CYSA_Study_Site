@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CySA+ PBQ Trainer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  :root{
+    --bg:#05080d;
+    --card:#0f1722;
+    --card2:#151c29;
+    --ink:#e6edf3;
+    --muted:#8b9bb5;
+    --accent:#4da3ff;
+    --accent2:#7c5cff;
+    --good:#22c55e;
+    --bad:#ef4444;
+    --radius:16px;
+  }
+
+  *{box-sizing:border-box;}
+
+  body{
+    margin:0;
+    background:radial-gradient(circle at top, #17233a 0, #05080d 55%);
+    color:var(--ink);
+    font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+  }
+
+  header{
+    padding:12px 16px;
+    background:#020617aa;
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid #1f2937;
+    position:sticky;
+    top:0;
+    z-index:20;
+  }
+
+  .title-row{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:12px;
+    justify-content:space-between;
+  }
+
+  h1{
+    font-size:1.1rem;
+    margin:0;
+    font-weight:600;
+    letter-spacing:0.03em;
+  }
+  .subtitle{
+    font-size:0.8rem;
+    color:var(--muted);
+    margin:0;
+  }
+
+  nav{
+    margin-top:8px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+  }
+
+  .nav-btn{
+    border:none;
+    border-radius:999px;
+    padding:6px 10px;
+    font-size:0.8rem;
+    background:#020617;
+    color:var(--muted);
+    cursor:pointer;
+    border:1px solid #1f2937;
+    transition:background .15s,border-color .15s,color .15s,transform .08s;
+    white-space:nowrap;
+  }
+  .nav-btn:hover{
+    background:#0b1120;
+    color:var(--ink);
+  }
+  .nav-btn.active{
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    color:white;
+    border-color:transparent;
+    transform:translateY(-1px);
+  }
+
+  main{
+    flex:1;
+    padding:16px;
+    max-width:1100px;
+    width:100%;
+    margin:0 auto 24px auto;
+  }
+
+  .pbq-page{
+    background:linear-gradient(145deg,#050814,var(--card));
+    border-radius:var(--radius);
+    border:1px solid #111827;
+    box-shadow:0 18px 40px rgba(0,0,0,0.5);
+    padding:18px 16px 20px;
+    display:none;
+  }
+  .pbq-page.active{display:block;}
+
+  .pbq-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:10px;
+    margin-bottom:10px;
+  }
+
+  .pbq-title{
+    font-size:1rem;
+    font-weight:600;
+  }
+  .pbq-domain{
+    font-size:0.75rem;
+    color:var(--muted);
+  }
+
+  .pbq-body{
+    background:var(--card2);
+    border-radius:var(--radius);
+    padding:12px;
+    border:1px solid #1f2937;
+  }
+
+  .pbq-instructions{
+    font-size:0.8rem;
+    color:var(--muted);
+    margin-bottom:12px;
+  }
+
+  .pill{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    font-size:0.7rem;
+    padding:3px 8px;
+    border-radius:999px;
+    background:#020617;
+    border:1px solid #1f2937;
+    color:var(--muted);
+  }
+
+  .btn{
+    border:none;
+    border-radius:999px;
+    padding:6px 12px;
+    font-size:0.8rem;
+    cursor:pointer;
+    background:var(--accent);
+    color:#0b1120;
+    font-weight:600;
+    box-shadow:0 8px 18px rgba(77,163,255,0.33);
+    transition:transform .08s,box-shadow .08s,opacity .08s;
+  }
+  .btn:active{
+    transform:translateY(1px);
+    box-shadow:0 2px 8px rgba(0,0,0,0.5);
+  }
+  .btn.secondary{
+    background:#020617;
+    border:1px solid #1f2937;
+    color:var(--muted);
+    box-shadow:none;
+  }
+
+  .feedback{
+    margin-top:10px;
+    font-size:0.8rem;
+    min-height:1.2em;
+  }
+  .good{color:var(--good);}
+  .bad{color:var(--bad);}
+
+  /* Drag & drop cards / rows */
+  .row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-bottom:10px;
+  }
+
+  .phase-slot{
+    flex:1 1 120px;
+    min-height:40px;
+    border-radius:10px;
+    border:1px dashed #374151;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:0.8rem;
+    color:var(--muted);
+    padding:4px;
+  }
+
+  .draggable{
+    padding:6px 10px;
+    border-radius:999px;
+    background:#020617;
+    border:1px solid #374151;
+    font-size:0.8rem;
+    cursor:grab;
+    user-select:none;
+    white-space:nowrap;
+  }
+  .draggable.dragging{opacity:.4;}
+
+  .drop-target.over{
+    border-color:var(--accent);
+    background:#020617aa;
+  }
+
+  /* Simple multiple choice */
+  .mc-block{
+    margin-bottom:8px;
+    padding:8px;
+    border-radius:10px;
+    background:#020617;
+    border:1px solid #1f2937;
+    font-size:0.8rem;
+  }
+  .mc-option{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    margin-top:6px;
+    cursor:pointer;
+    font-size:0.8rem;
+  }
+  .mc-option input{accent-color:var(--accent);}
+  .code{
+    font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size:0.75rem;
+    background:#020617;
+    padding:6px 8px;
+    border-radius:8px;
+    border:1px solid #111827;
+    overflow-x:auto;
+  }
+
+  /* PBQ specific layouts */
+  .two-col{
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px;
+  }
+  .two-col > div{
+    flex:1 1 220px;
+  }
+
+  .tag{
+    display:inline-block;
+    font-size:0.7rem;
+    padding:3px 7px;
+    border-radius:999px;
+    border:1px solid #1f2937;
+    background:#020617;
+    color:var(--muted);
+    margin-right:4px;
+    margin-top:2px;
+  }
+
+  @media (max-width:640px){
+    header{padding:10px;}
+    main{padding:10px;}
+    .pbq-page{padding:14px 10px;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="title-row">
+    <div>
+      <h1>CySA+ PBQ Trainer</h1>
+      <p class="subtitle">Tap a PBQ at the top — each opens its own practice “page”.</p>
+    </div>
+    <span class="pill">Mode: <strong>Study / Practice</strong></span>
+  </div>
+  <nav id="pbq-nav">
+    <button class="nav-btn active" data-target="pbq-ir">IR Phases</button>
+    <button class="nav-btn" data-target="pbq-logs">Log Analysis</button>
+    <button class="nav-btn" data-target="pbq-cvss">CVSS / Vuln</button>
+    <button class="nav-btn" data-target="pbq-diamond">Diamond / ATT&CK</button>
+    <button class="nav-btn" data-target="pbq-sanitization">Data Sanitization</button>
+    <button class="nav-btn" data-target="pbq-cloud">Cloud Tools</button>
+    <button class="nav-btn" data-target="pbq-auth">Auth / SSO</button>
+    <button class="nav-btn" data-target="pbq-nmap">Nmap Flags</button>
+  </nav>
+</header>
+
+<main>
+
+  <!-- PBQ 1: Incident Response Phases Ordering -->
+  <section id="pbq-ir" class="pbq-page active">
+    <div class="pbq-header">
+      <div>
+        <div class="pbq-title">Incident Response Phases — Ordering PBQ</div>
+        <div class="pbq-domain">Domain: Security Operations / Incident Response</div>
+      </div>
+      <span class="pill">Task: Drag phases into the correct order</span>
+    </div>
+    <div class="pbq-body">
+      <p class="pbq-instructions">
+        Drag each phase into the correct position in the NIST-style incident response lifecycle.
+      </p>
+
+      <div class="row" id="ir-slots">
+        <!-- slots populated by JS -->
+      </div>
+
+      <div class="row" id="ir-pieces">
+        <!-- draggable phases populated by JS -->
+      </div>
+
+      <button class="btn" id="ir-check">Check Order</button>
+      <button class="btn secondary" id="ir-reset" style="margin-left:6px;">Reset</button>
+      <div class="feedback" id="ir-feedback"></div>
+    </div>
+  </section>
+
+  <!-- PBQ 2: Log Analysis -->
+  <section id="pbq-logs" class="pbq-page">
+    <div class="pbq-header">
+      <div>
+        <div class="pbq-title">Log Analysis — Identify Activity</div>
+        <div class="pbq-domain">Domain: Security Operations / Monitoring</div>
+      </div>
+      <span class="pill">Task: Classify the event</span>
+    </div>
+    <div class="pbq-body">
+      <p class="pbq-instructions">
+        Read the log snippet, then choose what best describes the activity.
+      </p>
+
+      <div class="mc-block">
+<pre class="code">
+Feb 12 10:32:19 fw01 kernel: IN=eth0 OUT= MAC=00:0c:29:aa:bb:cc:de:ad:be:ef:08:00 \
+SRC=10.0.5.22 DST=198.51.100.44 LEN=60 TOS=0x00 PREC=0x00 TTL=63 ID=41231 DF PROTO=TCP \
+SPT=51988 DPT=22 WINDOW=64240 RES=0x00 SYN URGP=0
+Feb 12 10:32:20 fw01 kernel: ... (similar entries, different SPT, same DPT=22) ...
+</pre>
+        <label class="mc-option">
+          <input type="radio" name="log-q1" value="a">
+          <span>Normal SSH administrative session from an internal admin</span>
+        </label>
+        <label class="mc-option">
+          <input type="radio" name="log-q1" value="b">
+          <span>Port scan or brute-force activity targeting SSH (TCP/22)</span>
+        </label>
+        <label class="mc-option">
+          <input type="radio" name="log-q1" value="c">
+          <span>Data exfiltration over an encrypted tunnel</span>
+        </label>
+        <label class="mc-option">
+          <input type="radio" name="log-q1" value="d">
+          <span>DNS amplification reflection attack</span>
+        </label>
+      </div>
+
+      <button class="btn" id="logs-check">Check Answer</button>
+      <button class="btn secondary" id="logs-clear" style="margin-left:6px;">Clear</button>
+      <div class="feedback" id="logs-feedback"></div>
+    </div>
+  </section>
+
+  <!-- PBQ 3: CVSS / Vulnerability Prioritization -->
+  <section id="pbq-cvss" class="pbq-page">
+    <div class="pbq-header">
+      <div>
+        <div class="pbq-title">CVSS & Vulnerability Prioritization</div>
+        <div class="pbq-domain">Domain: Vulnerability Management</div>
+      </div>
+      <span class="pill">Task: Pick the highest priority ticket</span>
+    </div>
+    <div class="pbq-body">
+      <p class="pbq-instructions">
+        You have three findings. Which should be remediated first based on risk?
+      </p>
+
+      <div class="two-col">
+        <div>
+          <div class="mc-block">
+            <strong>Finding A</strong><br>
+            <span class="tag">CVSS 9.8 (Critical)</span>
+            <span class="tag">External-facing web server</span><br>
+            Unauthenticated RCE on an internet-facing customer portal.
+          </div>
+          <div class="mc-block">
+            <strong>Finding B</strong><br>
+            <span class="tag">CVSS 7.2 (High)</span>
+            <span class="tag">Internal file server</span><br>
+            Authenticated privilege escalation on an internal file server.
+          </div>
+          <div class="mc-block">
+            <strong>Finding C</strong><br>
+            <span class="tag">CVSS 6.5 (Medium)</span>
+            <span class="tag">Workstation</span><br>
+            Outdated PDF reader on a low-privilege workstation.
+          </div>
+        </div>
+        <div>
+          <p style="font-size:0.8rem;margin-bottom:6px;">Select which finding you would remediate <strong>first</strong>:</p>
+          <label class="mc-option">
+            <input type="radio" name="cvss-q1" value="A">
+            <span>Finding A</span>
+          </label>
+          <label class="mc-option">
+            <input type="radio" name="cvss-q1" value="B">
+            <span>Finding B</span>
+          </label>
+          <label class="mc-option">
+            <input type="radio" name="cvss-q1" value="C">
+            <span>Finding C</span>
+          </label>
+
+          <button class="btn" id="cvss-check" style="margin-top:8px;">Check Answer</button>
+          <button class="btn secondary" id="cvss-clear" style="margin-top:8px;margin-left:6px;">Clear</button>
+          <div class="feedback" id="cvss-feedback"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PBQ 4: Diamond Model / MITRE ATT&CK -->
+  <section id="pbq-diamond" class="pbq-page">
+    <div class="pbq-header">
+      <div>
+        <div class="pbq-title">Diamond Model / ATT&CK Mapping</div>
+        <div class="pbq-domain">Domain: Threat Intelligence & Modeling</div>
+      </div>
+      <span class="pill">Task: Drag each item to the right Diamond element</span>
+    </div>
+    <div class="pbq-body">
+      <p class="pbq-instructions">
+        Drag each artifact to the appropriate Diamond element: <strong>Adversary, Capability, Infrastructure, Victim</strong>.
+      </p>
+      <div class="two-col">
+        <div>
+          <div class="row" id="diamond-slots">
+            <!-- slots by JS -->
+          </div>
+        </div>
+        <div>
+          <div class="row" id="diamond-pieces">
+            <!-- draggables by JS -->
+          </div>
+        </div>
+      </div>
+      <button class="btn" id="diamond-check">Check Mapping</button>
+      <button class="btn secondary" id="diamond-reset" style="margin-left:6px;">Reset</button>
+      <div class="feedback" id="diamond-feedback"></div>
+    </div>
+  </section>
+
+  <!-- PBQ 5: Data Sanitization -->
+  <section id="pbq-sanitization" class="pbq-page">
+    <div class="pbq-header">
+      <div>
+        <div class="pbq-title">Data Sanitization — Clear / Purge / Destroy</div>
+        <div class="pbq-domain">Domain: Data Security</div>
+      </div>
+      <span class="pill">Task: Match scenario to the correct sanitization method</span>
+    </div>
+    <div class="pbq-body">
+      <p class="pbq-instructions">
+        Drag <strong>CLEAR</strong>, <strong>PURGE</strong>, or <strong>DESTROY</strong> into each scenario.
+      </p>
+      <div id="sanitization-slots" class="row"></div>
+      <div id="sanitization-pieces" class="row"></div>
+      <button class="btn" id="sanitization-check">Check Matches</button>
+      <button class="btn secondary" id="sanitization-reset" style="margin-left:6px;">Reset</button>
+      <div class="feedback" id="sanitization-feedback"></div>
+    </div>
+  </section>
+
+  <!-- PBQ 6: Cloud Tools -->
+  <section id="pbq-cloud" class="pbq-page">
+    <div class="pbq-header">
+      <div>
+        <div class="pbq-title">Cloud Assessment Tools — Match to Environment</div>
+        <div class="pbq-domain">Domain: Cloud & Tooling</div>
+      </div>
+      <span class="pill">Task: Drag tools to AWS / Azure / Multi-cloud</span>
+    </div>
+    <div class="pbq-body">
+      <p class="pbq-instructions">
+        Drag each tool name into the most appropriate cloud environment category.
+      </p>
+      <div class="two-col">
+        <div id="cloud-slots" class="row"></div>
+        <div id="cloud-pieces" class="row"></div>
+      </div>
+      <button class="btn" id="cloud-check">Check Mapping</button>
+      <button class="btn secondary" id="cloud-reset" style="margin-left:6px;">Reset</button>
+      <div class="feedback" id="cloud-feedback"></div>
+    </div>
+  </section>
+
+  <!-- PBQ 7: Auth / SSO -->
+  <section id="pbq-auth" class="pbq-page">
+    <div class="pbq-header">
+      <div>
+        <div class="pbq-title">Authentication / SSO / Federation</div>
+        <div class="pbq-domain">Domain: Identity & Access Management</div>
+      </div>
+      <span class="pill">Task: Identify the best technology for the scenario</span>
+    </div>
+    <div class="pbq-body">
+      <p class="pbq-instructions">
+        Choose the most appropriate technology for the scenario.
+      </p>
+      <div class="mc-block">
+        <strong>Scenario:</strong><br>
+        Your company wants users to log in once to an internal portal and then access a
+        partner’s SaaS app using their corporate identity. The partner supports browser-based
+        redirects and XML-based assertions.
+        <div style="margin-top:6px;font-size:0.75rem;">Which technology best fits?</div>
+        <label class="mc-option">
+          <input type="radio" name="auth-q1" value="saml">
+          <span>SAML 2.0</span>
+        </label>
+        <label class="mc-option">
+          <input type="radio" name="auth-q1" value="oauth">
+          <span>OAuth 2.0</span>
+        </label>
+        <label class="mc-option">
+          <input type="radio" name="auth-q1" value="radius">
+          <span>RADIUS</span>
+        </label>
+        <label class="mc-option">
+          <input type="radio" name="auth-q1" value="kerb">
+          <span>Kerberos</span>
+        </label>
+      </div>
+      <button class="btn" id="auth-check">Check Answer</button>
+      <button class="btn secondary" id="auth-clear" style="margin-left:6px;">Clear</button>
+      <div class="feedback" id="auth-feedback"></div>
+    </div>
+  </section>
+
+  <!-- PBQ 8: Nmap Flags -->
+  <section id="pbq-nmap" class="pbq-page">
+    <div class="pbq-header">
+      <div>
+        <div class="pbq-title">Nmap Flags — Match to Action</div>
+        <div class="pbq-domain">Domain: Recon / Network Investigations</div>
+      </div>
+      <span class="pill">Task: Drag the correct Nmap flag to each description</span>
+    </div>
+    <div class="pbq-body">
+      <p class="pbq-instructions">
+        Drag each Nmap option to the matching description. These are commonly tested on CySA+.
+      </p>
+      <div id="nmap-slots" class="row"></div>
+      <div id="nmap-pieces" class="row"></div>
+      <button class="btn" id="nmap-check">Check Matches</button>
+      <button class="btn secondary" id="nmap-reset" style="margin-left:6px;">Reset</button>
+      <div class="feedback" id="nmap-feedback"></div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+/* ---------- Nav handling (separate PBQ "pages") ---------- */
+const navBtns = document.querySelectorAll('.nav-btn');
+const pages = document.querySelectorAll('.pbq-page');
+
+navBtns.forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    navBtns.forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const target = btn.dataset.target;
+    pages.forEach(p=>{
+      p.classList.toggle('active', p.id === target);
+    });
+  });
+});
+
+/* ---------- Simple drag & drop helpers ---------- */
+function enableBasicDragDrop(containerIdPieces, containerIdSlots){
+  const piecesContainer = document.getElementById(containerIdPieces);
+  const slotsContainer  = document.getElementById(containerIdSlots);
+
+  function onDragStart(e){
+    const el = e.target;
+    if(!el.classList.contains('draggable')) return;
+    e.dataTransfer.setData('text/plain', el.dataset.key);
+    el.classList.add('dragging');
+  }
+  function onDragEnd(e){
+    e.target.classList.remove('dragging');
+  }
+
+  piecesContainer.addEventListener('dragstart', onDragStart);
+  piecesContainer.addEventListener('dragend', onDragEnd);
+  slotsContainer.addEventListener('dragstart', onDragStart);
+  slotsContainer.addEventListener('dragend', onDragEnd);
+
+  slotsContainer.addEventListener('dragover', e=>{
+    e.preventDefault();
+    const target = e.target.closest('.drop-target');
+    if(target) target.classList.add('over');
+  });
+  slotsContainer.addEventListener('dragleave', e=>{
+    const target = e.target.closest('.drop-target');
+    if(target) target.classList.remove('over');
+  });
+  slotsContainer.addEventListener('drop', e=>{
+    e.preventDefault();
+    const target = e.target.closest('.drop-target');
+    if(!target) return;
+    target.classList.remove('over');
+    const key = e.dataTransfer.getData('text/plain');
+    const piece = document.querySelector(`.draggable[data-key="${key}"]`);
+    if(piece){
+      target.innerHTML = '';
+      target.appendChild(piece);
+    }
+  });
+}
+
+/* ---------- PBQ 1: IR Phases ordering ---------- */
+const irPhases = [
+  "Preparation",
+  "Detection & Analysis",
+  "Containment, Eradication & Recovery",
+  "Post-incident activity"
+];
+const irSlots = document.getElementById('ir-slots');
+const irPieces = document.getElementById('ir-pieces');
+
+function shuffle(arr){return [...arr].sort(()=>Math.random()-0.5);}
+
+function buildIr(){
+  irSlots.innerHTML='';
+  irPieces.innerHTML='';
+  irPhases.forEach((label,idx)=>{
+    const slot = document.createElement('div');
+    slot.className='phase-slot drop-target';
+    slot.dataset.position = idx;
+    slot.textContent = `Step ${idx+1}`;
+    irSlots.appendChild(slot);
+  });
+  shuffle(irPhases).forEach((label)=>{
+    const pill = document.createElement('div');
+    pill.className='draggable';
+    pill.draggable=true;
+    pill.dataset.key=label;
+    pill.textContent=label;
+    irPieces.appendChild(pill);
+  });
+}
+buildIr();
+enableBasicDragDrop('ir-pieces','ir-slots');
+
+document.getElementById('ir-check').addEventListener('click',()=>{
+  const slots = [...document.querySelectorAll('#ir-slots .phase-slot')];
+  let correct = 0;
+  slots.forEach((slot,i)=>{
+    const pill = slot.querySelector('.draggable');
+    if(pill && pill.dataset.key === irPhases[i]){
+      correct++;
+      slot.style.borderColor = getComputedStyle(document.documentElement)
+        .getPropertyValue('--good');
+    } else {
+      slot.style.borderColor = getComputedStyle(document.documentElement)
+        .getPropertyValue('--bad');
+    }
+  });
+  const fb = document.getElementById('ir-feedback');
+  if(correct === irPhases.length){
+    fb.textContent="Perfect – phases are in the correct CySA+/NIST order.";
+    fb.className='feedback good';
+  }else{
+    fb.textContent=`${correct}/${irPhases.length} in the correct position. Review the lifecycle order.`;
+    fb.className='feedback bad';
+  }
+});
+document.getElementById('ir-reset').addEventListener('click',()=>{
+  buildIr();
+  enableBasicDragDrop('ir-pieces','ir-slots');
+  document.getElementById('ir-feedback').textContent='';
+});
+
+/* ---------- PBQ 2: Log Analysis ---------- */
+document.getElementById('logs-check').addEventListener('click',()=>{
+  const val = document.querySelector('input[name="log-q1"]:checked')?.value;
+  const fb = document.getElementById('logs-feedback');
+  if(!val){
+    fb.textContent = "Choose an option first.";
+    fb.className='feedback bad';
+    return;
+  }
+  if(val === 'b'){
+    fb.textContent = "Correct – repeated SYNs to TCP/22 with varying source ports looks like SSH probing/brute force.";
+    fb.className='feedback good';
+  } else {
+    fb.textContent = "Not quite. Think about repeated SYNs to SSH from the same host – that suggests scanning or brute force.";
+    fb.className='feedback bad';
+  }
+});
+document.getElementById('logs-clear').addEventListener('click',()=>{
+  document.querySelectorAll('input[name="log-q1"]').forEach(i=>i.checked=false);
+  document.getElementById('logs-feedback').textContent='';
+});
+
+/* ---------- PBQ 3: CVSS / Vuln ---------- */
+document.getElementById('cvss-check').addEventListener('click',()=>{
+  const val = document.querySelector('input[name="cvss-q1"]:checked')?.value;
+  const fb = document.getElementById('cvss-feedback');
+  if(!val){
+    fb.textContent="Select a finding.";
+    fb.className='feedback bad';
+    return;
+  }
+  if(val === 'A'){
+    fb.textContent="Correct – external-facing critical RCE is top priority.";
+    fb.className='feedback good';
+  } else {
+    fb.textContent="On CySA+, internet-facing critical RCE generally beats internal-only issues of lower or equal CVSS.";
+    fb.className='feedback bad';
+  }
+});
+document.getElementById('cvss-clear').addEventListener('click',()=>{
+  document.querySelectorAll('input[name="cvss-q1"]').forEach(i=>i.checked=false);
+  document.getElementById('cvss-feedback').textContent='';
+});
+
+/* ---------- PBQ 4: Diamond Model ---------- */
+const diamondData = {
+  "Adversary":[
+    "APT29 threat group",
+    "Ransomware affiliate 'AlphaSpider'"
+  ],
+  "Capability":[
+    "Custom PowerShell backdoor",
+    "Credential dumping via Mimikatz"
+  ],
+  "Infrastructure":[
+    "C2 server 203.0.113.77:443",
+    "Malicious domain: login-contoso[.]com"
+  ],
+  "Victim":[
+    "Finance workstation FNC-WS-07",
+    "Active Directory domain CONTOSO.LOCAL"
+  ]
+};
+const diamondSlots = document.getElementById('diamond-slots');
+const diamondPieces = document.getElementById('diamond-pieces');
+
+function buildDiamond(){
+  diamondSlots.innerHTML='';
+  diamondPieces.innerHTML='';
+  Object.keys(diamondData).forEach(el=>{
+    const slot = document.createElement('div');
+    slot.className='phase-slot drop-target';
+    slot.dataset.role=el;
+    slot.textContent = el;
+    diamondSlots.appendChild(slot);
+  });
+  let allPieces=[];
+  Object.entries(diamondData).forEach(([role,items])=>{
+    items.forEach(text=>allPieces.push({role,text}));
+  });
+  shuffle(allPieces).forEach(item=>{
+    const pill = document.createElement('div');
+    pill.className='draggable';
+    pill.draggable=true;
+    pill.dataset.key=item.text;
+    pill.dataset.role=item.role;
+    pill.textContent=item.text;
+    diamondPieces.appendChild(pill);
+  });
+}
+buildDiamond();
+enableBasicDragDrop('diamond-pieces','diamond-slots');
+
+document.getElementById('diamond-check').addEventListener('click',()=>{
+  let correct=0, total=0;
+  document.querySelectorAll('#diamond-slots .phase-slot').forEach(slot=>{
+    const role = slot.dataset.role;
+    slot.querySelectorAll('.draggable').forEach(pill=>{
+      total++;
+      if(pill.dataset.role === role) correct++;
+    });
+    slot.style.borderColor = getComputedStyle(document.documentElement)
+      .getPropertyValue('--accent');
+  });
+  const fb = document.getElementById('diamond-feedback');
+  fb.textContent = `${correct}/${total} items mapped to the correct Diamond element.`;
+  fb.className = correct===total? 'feedback good':'feedback bad';
+});
+document.getElementById('diamond-reset').addEventListener('click',()=>{
+  buildDiamond();
+  enableBasicDragDrop('diamond-pieces','diamond-slots');
+  document.getElementById('diamond-feedback').textContent='';
+});
+
+/* ---------- PBQ 5: Sanitization ---------- */
+const sanitizationScenarios = [
+  {
+    key:"CLEAR",
+    text:"Reusing a desktop HDD in the same classification level inside the org."
+  },
+  {
+    key:"PURGE",
+    text:"Donating SSDs to another organization where recovery by lab tools must be prevented."
+  },
+  {
+    key:"DESTROY",
+    text:"Decommissioning drives that held highly sensitive data in a hostile region."
+  }
+];
+
+function buildSanitization(){
+  const slots = document.getElementById('sanitization-slots');
+  const pieces = document.getElementById('sanitization-pieces');
+  slots.innerHTML=''; pieces.innerHTML='';
+  sanitizationScenarios.forEach((s,idx)=>{
+    const slot = document.createElement('div');
+    slot.className='phase-slot drop-target';
+    slot.dataset.answer=s.key;
+    slot.innerHTML = `<div style="font-size:0.7rem;margin-bottom:4px;">Scenario ${idx+1}</div>
+                      <div style="font-size:0.75rem;">${s.text}</div>`;
+    slots.appendChild(slot);
+  });
+  ["CLEAR","PURGE","DESTROY"].forEach(method=>{
+    const pill = document.createElement('div');
+    pill.className='draggable';
+    pill.draggable=true;
+    pill.dataset.key=method;
+    pill.textContent=method;
+    pieces.appendChild(pill);
+  });
+}
+buildSanitization();
+enableBasicDragDrop('sanitization-pieces','sanitization-slots');
+
+document.getElementById('sanitization-check').addEventListener('click',()=>{
+  let correct=0;
+  const total = sanitizationScenarios.length;
+  document.querySelectorAll('#sanitization-slots .phase-slot').forEach(slot=>{
+    const ans = slot.dataset.answer;
+    const pill = slot.querySelector('.draggable');
+    if(pill && pill.dataset.key===ans) correct++;
+    slot.style.borderColor = pill && pill.dataset.key===ans
+      ? getComputedStyle(document.documentElement).getPropertyValue('--good')
+      : getComputedStyle(document.documentElement).getPropertyValue('--bad');
+  });
+  const fb = document.getElementById('sanitization-feedback');
+  fb.textContent = `${correct}/${total} correct. Remember: CLEAR = reusable same environment, PURGE = make data infeasible to recover, DESTROY = render media unusable.`;
+  fb.className = correct===total ? 'feedback good':'feedback bad';
+});
+document.getElementById('sanitization-reset').addEventListener('click',()=>{
+  buildSanitization();
+  enableBasicDragDrop('sanitization-pieces','sanitization-slots');
+  document.getElementById('sanitization-feedback').textContent='';
+});
+
+/* ---------- PBQ 6: Cloud Tools ---------- */
+const cloudData = {
+  "AWS": ["Prowler","ScoutSuite (AWS config)"],
+  "Azure":["Azure Security Center recommendations"],
+  "Multi-cloud":["CloudSploit","ScoutSuite (multi-cloud)"]
+};
+
+function buildCloud(){
+  const slots = document.getElementById('cloud-slots');
+  const pieces = document.getElementById('cloud-pieces');
+  slots.innerHTML=''; pieces.innerHTML='';
+  Object.keys(cloudData).forEach(env=>{
+    const slot = document.createElement('div');
+    slot.className='phase-slot drop-target';
+    slot.dataset.env=env;
+    slot.innerHTML=`<strong style="font-size:0.8rem;">${env}</strong>`;
+    slots.appendChild(slot);
+  });
+  let tools=[];
+  Object.entries(cloudData).forEach(([env,list])=>{
+    list.forEach(t=>tools.push({env,t}));
+  });
+  shuffle(tools).forEach(item=>{
+    const pill=document.createElement('div');
+    pill.className='draggable';
+    pill.draggable=true;
+    pill.dataset.key=item.t;
+    pill.dataset.env=item.env;
+    pill.textContent=item.t;
+    pieces.appendChild(pill);
+  });
+}
+buildCloud();
+enableBasicDragDrop('cloud-pieces','cloud-slots');
+
+document.getElementById('cloud-check').addEventListener('click',()=>{
+  let correct=0, total=0;
+  document.querySelectorAll('#cloud-slots .phase-slot').forEach(slot=>{
+    const env=slot.dataset.env;
+    slot.querySelectorAll('.draggable').forEach(pill=>{
+      total++;
+      if(pill.dataset.env===env) correct++;
+    });
+  });
+  const fb=document.getElementById('cloud-feedback');
+  fb.textContent=`${correct}/${total} tools in the right environment. Prowler is AWS-focused; CloudSploit/ScoutSuite have broader support.`;
+  fb.className = correct===total?'feedback good':'feedback bad';
+});
+document.getElementById('cloud-reset').addEventListener('click',()=>{
+  buildCloud();
+  enableBasicDragDrop('cloud-pieces','cloud-slots');
+  document.getElementById('cloud-feedback').textContent='';
+});
+
+/* ---------- PBQ 7: Auth / SSO ---------- */
+document.getElementById('auth-check').addEventListener('click',()=>{
+  const val = document.querySelector('input[name="auth-q1"]:checked')?.value;
+  const fb = document.getElementById('auth-feedback');
+  if(!val){
+    fb.textContent="Choose a technology.";
+    fb.className='feedback bad';
+    return;
+  }
+  if(val==='saml'){
+    fb.textContent="Correct – SAML is ideal for browser-based SSO with federated partners using XML assertions.";
+    fb.className='feedback good';
+  } else {
+    fb.textContent="On CySA+, SAML is the classic choice for browser-based SSO between org and SaaS partner.";
+    fb.className='feedback bad';
+  }
+});
+document.getElementById('auth-clear').addEventListener('click',()=>{
+  document.querySelectorAll('input[name="auth-q1"]').forEach(i=>i.checked=false);
+  document.getElementById('auth-feedback').textContent='';
+});
+
+/* ---------- PBQ 8: Nmap Flags ---------- */
+const nmapItems = [
+  {flag:"-sS", desc:"SYN (stealth) scan"},
+  {flag:"-sT", desc:"TCP connect scan"},
+  {flag:"-sU", desc:"UDP scan"},
+  {flag:"-sV", desc:"Version detection"},
+  {flag:"-O",  desc:"OS detection"},
+  {flag:"-A",  desc:"Aggressive scan (OS + version + scripts + traceroute)"},
+  {flag:"-sn", desc:"Ping scan (host discovery only)"},
+  {flag:"-Pn", desc:"Treat hosts as up; skip host discovery"}
+];
+function buildNmap(){
+  const slots=document.getElementById('nmap-slots');
+  const pieces=document.getElementById('nmap-pieces');
+  slots.innerHTML=''; pieces.innerHTML='';
+  shuffle(nmapItems).forEach(item=>{
+    const slot=document.createElement('div');
+    slot.className='phase-slot drop-target';
+    slot.dataset.answer=item.flag;
+    slot.textContent=item.desc;
+    slots.appendChild(slot);
+  });
+  shuffle(nmapItems).forEach(item=>{
+    const pill=document.createElement('div');
+    pill.className='draggable';
+    pill.draggable=true;
+    pill.dataset.key=item.flag;
+    pill.textContent=item.flag;
+    pieces.appendChild(pill);
+  });
+}
+buildNmap();
+enableBasicDragDrop('nmap-pieces','nmap-slots');
+
+document.getElementById('nmap-check').addEventListener('click',()=>{
+  let correct=0,total=nmapItems.length;
+  document.querySelectorAll('#nmap-slots .phase-slot').forEach(slot=>{
+    const ans=slot.dataset.answer;
+    const pill=slot.querySelector('.draggable');
+    if(pill && pill.dataset.key===ans){
+      correct++;
+      slot.style.borderColor=getComputedStyle(document.documentElement)
+        .getPropertyValue('--good');
+    } else {
+      slot.style.borderColor=getComputedStyle(document.documentElement)
+        .getPropertyValue('--bad');
+    }
+  });
+  const fb=document.getElementById('nmap-feedback');
+  fb.textContent=`${correct}/${total} Nmap flags correctly matched.`;
+  fb.className=correct===total?'feedback good':'feedback bad';
+});
+document.getElementById('nmap-reset').addEventListener('click',()=>{
+  buildNmap();
+  enableBasicDragDrop('nmap-pieces','nmap-slots');
+  document.getElementById('nmap-feedback').textContent='';
+});
+</script>
+
+</body>
+</html>
